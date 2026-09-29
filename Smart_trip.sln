@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Domain", "SmartTrip.Domain\SmartTrip.Domain.csproj", "{2E4B24AB-5B21-48B8-985B-1E79DF3942D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Application", "SmartTrip.Application\SmartTrip.Application.csproj", "{751CC865-DD45-43F1-AC43-19E9B9F33517}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Infrastructure", "SmartTrip.Infrastructure\SmartTrip.Infrastructure.csproj", "{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.API", "SmartTrip.API\SmartTrip.API.csproj", "{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E4B24AB-5B21-48B8-985B-1E79DF3942D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E4B24AB-5B21-48B8-985B-1E79DF3942D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E4B24AB-5B21-48B8-985B-1E79DF3942D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E4B24AB-5B21-48B8-985B-1E79DF3942D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{751CC865-DD45-43F1-AC43-19E9B9F33517}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{751CC865-DD45-43F1-AC43-19E9B9F33517}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{751CC865-DD45-43F1-AC43-19E9B9F33517}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{751CC865-DD45-43F1-AC43-19E9B9F33517}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
