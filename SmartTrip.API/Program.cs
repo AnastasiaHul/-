@@ -1,6 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using SmartTrip.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// 1. Отримуємо рядок підключення з appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// 2. Додаємо ApplicationDbContext та вказуємо провайдер PostgreSQL (Npgsql)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -23,3 +33,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
