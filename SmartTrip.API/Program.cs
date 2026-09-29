@@ -1,4 +1,4 @@
-using Serilog;
+﻿using Serilog;
 using Microsoft.EntityFrameworkCore;
 using SmartTrip.Infrastructure.Data;
 
@@ -17,6 +17,11 @@ try
         .Enrich.FromLogContext());
 
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException("Критична помилка: Рядок підключення 'DefaultConnection' не знайдено в конфігурації.");
+    }
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(connectionString));
 
