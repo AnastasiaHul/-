@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartTrip.Application\SmartTrip.Application.csproj" />
+    <ProjectReference Include="..\SmartTrip.Infrastructure\SmartTrip.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
