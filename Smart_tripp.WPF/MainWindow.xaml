@@ -1,12 +1,474 @@
 ﻿<Window x:Class="Smart_tripp.WPF.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Smart_tripp.WPF"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Smart Trip — планування подорожей"
+    Width="1180" Height="820"
+    MinWidth="940" MinHeight="650"
+    Background="#F5F7FB">
 
-    </Grid>
+    <DockPanel Margin="18">
+
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Smart Trip"
+                       FontSize="30"
+                       FontWeight="Bold"
+                       Foreground="#193B56"/>
+
+            <TextBlock
+                Text="Подорожі, цікаві місця та бюджет в одному застосунку"
+                Margin="0,4,0,12"/>
+
+            <Border Background="White"
+                    Padding="10"
+                    CornerRadius="8">
+                <StackPanel>
+                    <TextBlock x:Name="SessionText"
+                               Text="Гість — переглядайте каталог або увійдіть"
+                               FontWeight="Bold"/>
+
+                    <WrapPanel x:Name="LoginPanel">
+                        <StackPanel Width="220">
+                            <TextBlock Text="Email" Margin="5,2"/>
+                            <TextBox x:Name="EmailBox"/>
+                        </StackPanel>
+
+                        <StackPanel Width="180">
+                            <TextBlock Text="Пароль — мінімум 10 символів"
+                                       Margin="5,2"/>
+                            <PasswordBox x:Name="PasswordBox"/>
+                        </StackPanel>
+
+                        <StackPanel Width="140">
+                            <TextBlock Text="Ім’я для реєстрації"
+                                       Margin="5,2"/>
+                            <TextBox x:Name="NameBox"/>
+                        </StackPanel>
+
+                        <StackPanel Width="140">
+                            <TextBlock Text="Роль для реєстрації"
+                                       Margin="5,2"/>
+                            <ComboBox x:Name="RoleBox"
+                                      SelectedIndex="0">
+                                <ComboBoxItem Content="Турист"
+                                              Tag="Tourist"/>
+                                <ComboBoxItem Content="Партнер"
+                                              Tag="Partner"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <Button Content="Увійти"
+                                Tag="Login"
+                                Click="OnAuthAction"
+                                VerticalAlignment="Bottom"/>
+
+                        <Button Content="Зареєструватися"
+                                Tag="Register"
+                                Click="OnAuthAction"
+                                VerticalAlignment="Bottom"/>
+                    </WrapPanel>
+
+                    <Button x:Name="LogoutButton"
+                            Content="Вийти з акаунту"
+                            Tag="Logout"
+                            Click="OnAuthAction"
+                            Visibility="Collapsed"
+                            HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <Border DockPanel.Dock="Bottom"
+                Background="#E8EEF5"
+                Padding="8"
+                Margin="0,10,0,0">
+            <TextBlock x:Name="StatusText"
+                       Text="Готово. Для початку зареєструйте туриста або партнера."
+                       TextWrapping="Wrap"/>
+        </Border>
+
+        <TabControl x:Name="Tabs"
+                    Margin="0,12,0,0"
+                    SelectedIndex="2">
+
+            <!-- Подорожі туриста -->
+            <TabItem x:Name="TripsTab"
+                     Header="Мої подорожі"
+                     IsEnabled="False">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock
+                            Text="Створіть подорож або виберіть рядок для редагування"
+                            FontSize="18"
+                            Margin="4,0,0,8"/>
+
+                        <DataGrid x:Name="TripsGrid"
+                                  Height="220"
+                                  SelectionChanged="OnTripSelected">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Назва"
+                                    Binding="{Binding Title}" Width="*"/>
+                                <DataGridTextColumn Header="Місто"
+                                    Binding="{Binding City}" Width="160"/>
+                                <DataGridTextColumn Header="Початок"
+                                    Binding="{Binding StartDate, StringFormat=dd.MM.yyyy}"
+                                    Width="110"/>
+                                <DataGridTextColumn Header="Кінець"
+                                    Binding="{Binding EndDate, StringFormat=dd.MM.yyyy}"
+                                    Width="110"/>
+                                <DataGridTextColumn Header="Бюджет ₴"
+                                    Binding="{Binding Budget, StringFormat=N2}"
+                                    Width="120"/>
+                                <DataGridTextColumn Header="Людей"
+                                    Binding="{Binding PeopleCount}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <WrapPanel>
+                            <StackPanel Width="220">
+                                <TextBlock Text="Назва" Margin="5,2"/>
+                                <TextBox x:Name="TripTitle"/>
+                            </StackPanel>
+
+                            <StackPanel Width="180">
+                                <TextBlock Text="Місто" Margin="5,2"/>
+                                <TextBox x:Name="TripCity"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Початок" Margin="5,2"/>
+                                <DatePicker x:Name="TripStart"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Кінець" Margin="5,2"/>
+                                <DatePicker x:Name="TripEnd"/>
+                            </StackPanel>
+
+                            <StackPanel Width="130">
+                                <TextBlock Text="Бюджет ₴" Margin="5,2"/>
+                                <TextBox x:Name="TripBudget"/>
+                            </StackPanel>
+
+                            <StackPanel Width="130">
+                                <TextBlock Text="Кількість людей" Margin="5,2"/>
+                                <TextBox x:Name="TripPeople"/>
+                            </StackPanel>
+                        </WrapPanel>
+
+                        <StackPanel Width="600"
+                                    HorizontalAlignment="Left">
+                            <TextBlock Text="Інтереси" Margin="5,2"/>
+                            <TextBox x:Name="TripInterests"/>
+                        </StackPanel>
+
+                        <WrapPanel>
+                            <Button Content="Нова подорож"
+                                    Tag="New" Click="OnTripAction"/>
+                            <Button Content="Зберегти"
+                                    Tag="Save" Click="OnTripAction"/>
+                            <Button Content="Видалити вибрану"
+                                    Tag="Delete" Click="OnTripAction"/>
+                            <Button Content="Оновити список"
+                                    Tag="Refresh" Click="OnTripAction"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Місця партнера -->
+            <TabItem x:Name="PlacesTab"
+                     Header="Місця партнера"
+                     IsEnabled="False">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Ваші місця — додавання та керування"
+                                   FontSize="18"
+                                   Margin="4,0,0,8"/>
+
+                        <DataGrid x:Name="PlacesGrid"
+                                  Height="220"
+                                  SelectionChanged="OnPlaceSelected">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Назва"
+                                    Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Категорія"
+                                    Binding="{Binding Category}" Width="160"/>
+                                <DataGridTextColumn Header="Ціна ₴"
+                                    Binding="{Binding Price, StringFormat=N2}"
+                                    Width="120"/>
+                                <DataGridTextColumn Header="Адреса"
+                                    Binding="{Binding Address}" Width="220"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <WrapPanel>
+                            <StackPanel Width="250">
+                                <TextBlock Text="Назва" Margin="5,2"/>
+                                <TextBox x:Name="PlaceName"/>
+                            </StackPanel>
+
+                            <StackPanel Width="180">
+                                <TextBlock Text="Категорія" Margin="5,2"/>
+                                <TextBox x:Name="PlaceCategory"/>
+                            </StackPanel>
+
+                            <StackPanel Width="130">
+                                <TextBlock Text="Ціна ₴" Margin="5,2"/>
+                                <TextBox x:Name="PlacePrice"/>
+                            </StackPanel>
+
+                            <StackPanel Width="300">
+                                <TextBlock Text="Адреса" Margin="5,2"/>
+                                <TextBox x:Name="PlaceAddress"/>
+                            </StackPanel>
+                        </WrapPanel>
+
+                        <StackPanel Width="400"
+                                    HorizontalAlignment="Left">
+                            <TextBlock Text="Графік роботи" Margin="5,2"/>
+                            <TextBox x:Name="PlaceSchedule"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Опис" Margin="5,2"/>
+                        <TextBox x:Name="PlaceDescription"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 Height="80"
+                                 VerticalScrollBarVisibility="Auto"/>
+
+                        <WrapPanel>
+                            <Button Content="Нове місце"
+                                    Tag="New" Click="OnPlaceAction"/>
+                            <Button Content="Зберегти"
+                                    Tag="Save" Click="OnPlaceAction"/>
+                            <Button Content="Видалити вибране"
+                                    Tag="Delete" Click="OnPlaceAction"/>
+                            <Button Content="Оновити список"
+                                    Tag="Refresh" Click="OnPlaceAction"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Каталог -->
+            <TabItem Header="Каталог та обране">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Знайдіть місце для вашої подорожі"
+                                   FontSize="18"
+                                   Margin="4,0,0,8"/>
+
+                        <WrapPanel>
+                            <StackPanel Width="240">
+                                <TextBlock Text="Назва містить" Margin="5,2"/>
+                                <TextBox x:Name="SearchText"/>
+                            </StackPanel>
+
+                            <StackPanel Width="180">
+                                <TextBlock Text="Категорія" Margin="5,2"/>
+                                <TextBox x:Name="SearchCategory"/>
+                            </StackPanel>
+
+                            <StackPanel Width="180">
+                                <TextBlock Text="Максимальна ціна ₴"
+                                           Margin="5,2"/>
+                                <TextBox x:Name="SearchPrice"/>
+                            </StackPanel>
+
+                            <CheckBox x:Name="OnlyFavorites"
+                                      Content="Лише обране"
+                                      VerticalAlignment="Bottom"
+                                      Margin="12"/>
+
+                            <Button Content="Шукати / оновити"
+                                    Tag="Search"
+                                    Click="OnCatalogAction"
+                                    VerticalAlignment="Bottom"/>
+                        </WrapPanel>
+
+                        <DataGrid x:Name="CatalogGrid" Height="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Назва"
+                                    Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Категорія"
+                                    Binding="{Binding Category}" Width="180"/>
+                                <DataGridTextColumn Header="Ціна ₴"
+                                    Binding="{Binding Price, StringFormat=N2}"
+                                    Width="120"/>
+                                <DataGridTextColumn Header="Адреса"
+                                    Binding="{Binding Address}" Width="240"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <WrapPanel>
+                            <Button Content="Деталі та відгуки"
+                                    Tag="Details"
+                                    Click="OnCatalogAction"/>
+                            <Button Content="Додати / прибрати з обраного"
+                                    Tag="Favorite"
+                                    Click="OnCatalogAction"/>
+                        </WrapPanel>
+
+                        <TextBlock
+                            Text="Залишити відгук про вибране місце — для туриста"
+                            FontWeight="Bold"
+                            Margin="5,12,0,4"/>
+
+                        <WrapPanel>
+                            <StackPanel>
+                                <TextBlock Text="Оцінка" Margin="5,2"/>
+                                <ComboBox x:Name="RatingBox"
+                                          SelectedIndex="4">
+                                    <ComboBoxItem Content="1"/>
+                                    <ComboBoxItem Content="2"/>
+                                    <ComboBoxItem Content="3"/>
+                                    <ComboBoxItem Content="4"/>
+                                    <ComboBoxItem Content="5"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Width="650">
+                                <TextBlock Text="Відгук" Margin="5,2"/>
+                                <TextBox x:Name="ReviewComment"/>
+                            </StackPanel>
+
+                            <Button Content="Зберегти відгук"
+                                    Tag="Review"
+                                    Click="OnCatalogAction"
+                                    VerticalAlignment="Bottom"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Бюджет та список речей -->
+            <TabItem x:Name="BudgetTab"
+                     Header="Бюджет та речі"
+                     IsEnabled="False">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <WrapPanel>
+                            <TextBlock Text="Подорож:"
+                                       VerticalAlignment="Center"/>
+
+                            <ComboBox x:Name="BudgetTrip"
+                                      Width="400"
+                                      DisplayMemberPath="Title"
+                                      SelectionChanged="OnBudgetTripChanged"/>
+
+                            <Button Content="Розрахувати бюджет"
+                                    Tag="Calculate"
+                                    Click="OnBudgetAction"/>
+
+                            <Button Content="Статистика витрат"
+                                    Tag="Statistics"
+                                    Click="OnBudgetAction"/>
+                        </WrapPanel>
+
+                        <TextBlock x:Name="BudgetSummaryText"
+                                   Text="Виберіть подорож"
+                                   FontSize="17"
+                                   FontWeight="Bold"
+                                   TextWrapping="Wrap"
+                                   Margin="5,10"/>
+
+                        <TextBlock Text="Витрати"
+                                   FontSize="18" Margin="4,8"/>
+
+                        <DataGrid x:Name="ExpensesGrid" Height="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Дата"
+                                    Binding="{Binding Date, StringFormat=dd.MM.yyyy}"
+                                    Width="110"/>
+                                <DataGridTextColumn Header="Категорія"
+                                    Binding="{Binding Category}" Width="160"/>
+                                <DataGridTextColumn Header="Опис"
+                                    Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Сума ₴"
+                                    Binding="{Binding Amount, StringFormat=N2}"
+                                    Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <WrapPanel>
+                            <StackPanel Width="160">
+                                <TextBlock Text="Категорія" Margin="5,2"/>
+                                <TextBox x:Name="ExpenseCategory"/>
+                            </StackPanel>
+
+                            <StackPanel Width="300">
+                                <TextBlock Text="Опис витрати" Margin="5,2"/>
+                                <TextBox x:Name="ExpenseDescription"/>
+                            </StackPanel>
+
+                            <StackPanel Width="130">
+                                <TextBlock Text="Сума ₴" Margin="5,2"/>
+                                <TextBox x:Name="ExpenseAmount"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Дата витрати" Margin="5,2"/>
+                                <DatePicker x:Name="ExpenseDate"/>
+                            </StackPanel>
+
+                            <Button Content="Додати витрату"
+                                    Tag="Expense"
+                                    Click="OnBudgetAction"
+                                    VerticalAlignment="Bottom"/>
+                        </WrapPanel>
+
+                        <TextBlock Text="Статистика за категоріями"
+                                   Margin="5,10,0,4"
+                                   FontWeight="Bold"/>
+
+                        <DataGrid x:Name="StatisticsGrid" Height="160">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Категорія"
+                                    Binding="{Binding Category}" Width="*"/>
+                                <DataGridTextColumn Header="Витрачено ₴"
+                                    Binding="{Binding Total, StringFormat=N2}"
+                                    Width="140"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Список речей"
+                                   FontSize="18"
+                                   Margin="4,12,0,5"/>
+
+                        <DataGrid x:Name="PackingGrid" Height="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Річ"
+                                    Binding="{Binding Name}" Width="*"/>
+                                <DataGridCheckBoxColumn Header="Зібрано"
+                                    Binding="{Binding IsPacked}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <WrapPanel>
+                            <StackPanel Width="300">
+                                <TextBlock Text="Назва речі" Margin="5,2"/>
+                                <TextBox x:Name="PackingName"/>
+                            </StackPanel>
+
+                            <Button Content="Додати річ"
+                                    Tag="Add"
+                                    Click="OnPackingAction"
+                                    VerticalAlignment="Bottom"/>
+
+                            <Button Content="Зібрано / не зібрано"
+                                    Tag="Toggle"
+                                    Click="OnPackingAction"
+                                    VerticalAlignment="Bottom"/>
+
+                            <Button Content="Видалити річ"
+                                    Tag="Delete"
+                                    Click="OnPackingAction"
+                                    VerticalAlignment="Bottom"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
 </Window>
