@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Application", "Sm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Infrastructure", "SmartTrip.Infrastructure\SmartTrip.Infrastructure.csproj", "{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.API", "SmartTrip.API\SmartTrip.API.csproj", "{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Smart_tripp.WPF", "Smart_tripp.WPF\Smart_tripp.WPF.csproj", "{97826B76-4F78-4024-93BC-0AF9D515476F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC891BAF-1F73-407C-A7A9-AF3E89B8F7F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BE80BA63-BE6E-4112-B114-C1FD17EC8ADD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97826B76-4F78-4024-93BC-0AF9D515476F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97826B76-4F78-4024-93BC-0AF9D515476F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97826B76-4F78-4024-93BC-0AF9D515476F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97826B76-4F78-4024-93BC-0AF9D515476F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
