@@ -45,6 +45,7 @@ public partial class MainWindow : Window
 
         ClearTripEditor();
         ClearPlaceEditor();
+        UpdateAccountNavigation();
 
         Loaded += async (_, _) => await ExecuteAsync(SearchAsync);
     }
@@ -57,7 +58,16 @@ public partial class MainWindow : Window
         }
 
         busy = true;
-        IsEnabled = false;
+
+        if (activeDialog is not null)
+        {
+            activeDialog.IsEnabled = false;
+        }
+        else
+        {
+            IsEnabled = false;
+        }
+
         StatusText.Text = "Виконується…";
 
         try
@@ -85,7 +95,7 @@ public partial class MainWindow : Window
             StatusText.Text = message;
 
             MessageBox.Show(
-                this,
+                activeDialog ?? this,
                 message,
                 "Smart Trip",
                 MessageBoxButton.OK,
@@ -94,6 +104,12 @@ public partial class MainWindow : Window
         finally
         {
             IsEnabled = true;
+
+            if (activeDialog is not null)
+            {
+                activeDialog.IsEnabled = true;
+            }
+
             busy = false;
         }
     }
@@ -160,6 +176,9 @@ public partial class MainWindow : Window
                 : user is null ? 2 : 0;
 
             await RefreshAllAsync();
+
+            UpdateAccountNavigation();
+            CompleteDialog();
         });
     }
 
@@ -263,6 +282,11 @@ public partial class MainWindow : Window
             }
 
             await RefreshTripsAsync();
+
+            if (UiInput.Action(sender) == "Save")
+            {
+                CompleteDialog();
+            }
         });
     }
 
@@ -353,6 +377,11 @@ public partial class MainWindow : Window
 
             await RefreshPlacesAsync();
             await SearchAsync();
+
+            if (UiInput.Action(sender) == "Save")
+            {
+                CompleteDialog();
+            }
         });
     }
 
@@ -464,33 +493,26 @@ public partial class MainWindow : Window
                     ReviewComment.Text);
 
                 ReviewComment.Clear();
+                CompleteDialog();
             }
         });
     }
 
     private void ShowDetails(string text)
     {
-        var window = new Window
+        var details = new TextBox
         {
-            Title = "Деталі місця",
-            Owner = this,
-            Width = 640,
-            Height = 560,
-            WindowStartupLocation =
-                WindowStartupLocation.CenterOwner,
-
-            Content = new TextBox
-            {
-                Text = text,
-                IsReadOnly = true,
-                TextWrapping = TextWrapping.Wrap,
-                VerticalScrollBarVisibility =
-                    ScrollBarVisibility.Auto,
-                Margin = new Thickness(16)
-            }
+            Text = text,
+            IsReadOnly = true,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Margin = new Thickness(0)
         };
 
-        window.ShowDialog();
+        CreateDialog(
+            "Деталі місця та відгуки",
+            details,
+            720).ShowDialog();
     }
 
     private int SelectedTripId()
@@ -564,6 +586,11 @@ public partial class MainWindow : Window
             }
 
             await RefreshBudgetAsync();
+
+            if (UiInput.Action(sender) == "Expense")
+            {
+                CompleteDialog();
+            }
         });
     }
 
