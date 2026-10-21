@@ -26,7 +26,7 @@ public class TripServiceCreateTripTests
         userSession = new UserSession();
         operations = new ServiceOperations(mockLogger.Object, userSession);
         tripService = new TripService(mockTrips.Object, userSession, operations);
-        
+
         var currentUser = new User { UserId = 1, FirstName = "Tourist", Role = "Tourist" };
         userSession.SignIn(currentUser);
     }
@@ -70,7 +70,7 @@ public class TripServiceCreateTripTests
                 5000, 4, ""));
 
         Assert.Contains("Назва", exception.Message);
-        
+
         mockTrips.Verify(
             x => x.AddAsync(It.IsAny<Trip>()),
             Times.Never);
@@ -87,7 +87,7 @@ public class TripServiceCreateTripTests
                 5000, 4, ""));
 
         Assert.Contains("раніше початку", exception.Message);
-        
+
         mockTrips.Verify(
             x => x.AddAsync(It.IsAny<Trip>()),
             Times.Never);
@@ -96,15 +96,16 @@ public class TripServiceCreateTripTests
     [Fact]
     public async Task CreateTrip_With366Days_ThrowsException()
     {
+        // 2024  високосний рік: різниця між 01.01.2024 і 01.01.2025 рівно 366 днів.
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => tripService.SaveAsync(
                 null, "Long Trip", "Paris",
                 new DateTime(2024, 1, 1),
-                new DateTime(2025, 1, 2),
+                new DateTime(2025, 1, 1),
                 5000, 4, ""));
 
         Assert.Contains("365 днів", exception.Message);
-        
+
         mockTrips.Verify(
             x => x.AddAsync(It.IsAny<Trip>()),
             Times.Never);
@@ -140,7 +141,7 @@ public class TripServiceCreateTripTests
                 5000, peopleCount, ""));
 
         Assert.Contains("від 1 до 1000", exception.Message);
-        
+
         mockTrips.Verify(x => x.AddAsync(It.IsAny<Trip>()), Times.Never);
     }
 
@@ -155,7 +156,7 @@ public class TripServiceCreateTripTests
                 5000, 1001, ""));
 
         Assert.Contains("від 1 до 1000", exception.Message);
-        
+
         mockTrips.Verify(x => x.AddAsync(It.IsAny<Trip>()), Times.Never);
     }
 
@@ -172,7 +173,7 @@ public class TripServiceCreateTripTests
                 5000, 4, longInterests));
 
         Assert.Contains("1000 символів", exception.Message);
-        
+
         mockTrips.Verify(x => x.AddAsync(It.IsAny<Trip>()), Times.Never);
     }
 
@@ -283,6 +284,31 @@ public class TripServiceEditTripTests
             x => x.UpdateAsync(It.IsAny<Trip>()),
             Times.Never);
     }
+
+    [Fact]
+    public async Task EditTrip_WithNonexistentTrip_ThrowsException()
+    {
+        mockTrips
+            .Setup(x => x.FindAsync(999))
+            .ReturnsAsync((Trip?)null);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => tripService.SaveAsync(
+                id: 999,
+                title: "New Title",
+                city: "Paris",
+                start: new DateTime(2024, 10, 1),
+                end: new DateTime(2024, 10, 10),
+                budget: 5000,
+                people: 2,
+                interests: ""));
+
+        Assert.Contains("Подорож не знайдена", exception.Message);
+
+        mockTrips.Verify(
+            x => x.UpdateAsync(It.IsAny<Trip>()),
+            Times.Never);
+    }
 }
 
 public class TripServiceListTripsTests
@@ -308,20 +334,28 @@ public class TripServiceListTripsTests
     [Fact]
     public async Task ListTrips_ReturnsOnlyCurrentUserTrips()
     {
-        var userTrips = new List<Trip>
+        // "База даних" містить подорожі і поточного, і інших користувачів.
+        var allTrips = new List<Trip>
         {
             new Trip { TripId = 1, UserId = 1, Title = "My Trip 1" },
-            new Trip { TripId = 3, UserId = 1, Title = "My Trip 2" }
+            new Trip { TripId = 2, UserId = 999, Title = "Other User Trip" },
+            new Trip { TripId = 3, UserId = 1, Title = "My Trip 2" },
+            new Trip { TripId = 4, UserId = 2, Title = "Another User Trip" }
         };
 
+        // Мок застосовує реальний предикат, який передав сервіс,
+        // тому тест перевіряє саме фільтрацію, а не заздалегідь підготовлений список.
         mockTrips
             .Setup(x => x.ListAsync(It.IsAny<Expression<Func<Trip, bool>>>()))
-            .ReturnsAsync(userTrips);
+            .ReturnsAsync((Expression<Func<Trip, bool>> predicate) =>
+                allTrips.Where(predicate.Compile()).ToList());
 
         var result = await tripService.ListAsync();
 
         Assert.Equal(2, result.Count);
         Assert.All(result, trip => Assert.Equal(1, trip.UserId));
+        Assert.DoesNotContain(result, trip => trip.TripId == 2);
+        Assert.DoesNotContain(result, trip => trip.TripId == 4);
 
         mockTrips.Verify(
             x => x.ListAsync(It.IsAny<Expression<Func<Trip, bool>>>()),
@@ -394,6 +428,23 @@ public class TripServiceDeleteTripTests
             () => tripService.DeleteAsync(1));
 
         Assert.Contains("власними подорожами", exception.Message);
+
+        mockTrips.Verify(
+            x => x.DeleteAsync(It.IsAny<Trip>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteTrip_WithNonexistentTrip_ThrowsException()
+    {
+        mockTrips
+            .Setup(x => x.FindAsync(999))
+            .ReturnsAsync((Trip?)null);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => tripService.DeleteAsync(999));
+
+        Assert.Contains("Подорож не знайдена", exception.Message);
 
         mockTrips.Verify(
             x => x.DeleteAsync(It.IsAny<Trip>()),
