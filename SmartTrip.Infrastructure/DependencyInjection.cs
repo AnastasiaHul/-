@@ -31,6 +31,12 @@ public static class DependencyInjection
         services.AddScoped<CatalogService>();
         services.AddScoped<BudgetService>();
         services.AddScoped<PackingService>();
+        services.AddScoped<ItineraryService>();
+        services.AddScoped<MapRouteService>();
+
+        services.AddScoped<
+            IRepository<ItineraryVisit>,
+            EfRepository<ItineraryVisit>>();
 
         services.AddScoped<IRepository<User>, UserRepository>();
         services.AddScoped<IRepository<Trip>, TripRepository>();

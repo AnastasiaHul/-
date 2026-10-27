@@ -17,6 +17,8 @@ public partial class MainWindow : Window
     private readonly PackingService packing;
     private readonly UserSession session;
     private readonly IAppLogger logger;
+    private readonly ItineraryService itinerary;
+    private readonly MapRouteService mapRoutes;
 
     private bool busy;
     private int? editingTripId;
@@ -30,7 +32,10 @@ public partial class MainWindow : Window
         BudgetService budget,
         PackingService packing,
         UserSession session,
-        IAppLogger logger)
+        IAppLogger logger,
+        ItineraryService itinerary,
+        MapRouteService mapRoutes)
+
     {
         this.auth = auth;
         this.trips = trips;
@@ -40,6 +45,8 @@ public partial class MainWindow : Window
         this.packing = packing;
         this.session = session;
         this.logger = logger;
+        this.itinerary = itinerary;
+        this.mapRoutes = mapRoutes;
 
         InitializeComponent();
 

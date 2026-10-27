@@ -15,9 +15,53 @@ public sealed record CategoryTotal(
 
 public sealed class BudgetService(
     IRepository<Expense> expenses,
+    IRepository<Place> places,
     TripService trips,
     ServiceOperations operations)
 {
+    public Task AddPlaceExpenseAsync(
+        int tripId,
+        int placeId,
+        DateTime date)
+    {
+        return operations.RunAsync(
+            "AddPlaceToExpenses",
+            async () =>
+            {
+                // Перевіряємо, що подорож належить туристу.
+                await trips.OwnedAsync(tripId)
+                    .ConfigureAwait(false);
+
+                // Отримуємо місце та його актуальну ціну з бази.
+                Place place = await places.FindAsync(placeId)
+                    .ConfigureAwait(false)
+                    ?? throw new ArgumentException(
+                        "Місце не знайдено.");
+
+                if (place.Status == "Hidden")
+                {
+                    throw new ArgumentException(
+                        "Це місце зараз недоступне.");
+                }
+
+                if (place.Price <= 0)
+                {
+                    throw new ArgumentException(
+                        "Відвідування безкоштовне — "
+                        + "додавати витрату не потрібно.");
+                }
+
+                // Зберігаємо витрату за одне відвідування.
+                await AddExpenseAsync(
+                    tripId,
+                    place.Category,
+                    $"Відвідування: {place.Name}",
+                    place.Price,
+                    date)
+                    .ConfigureAwait(false);
+            });
+    }
+
     public Task<BudgetSummary> CalculateAsync(int tripId)
     {
         return operations.RunAsync(

@@ -16,10 +16,31 @@ public class ApplicationDbContext : DbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<PackingItem> PackingItems => Set<PackingItem>();
+    public DbSet<ItineraryVisit> ItineraryVisits =>
+    Set<ItineraryVisit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ItineraryVisit>()
+    .HasOne<Trip>()
+    .WithMany()
+    .HasForeignKey(visit => visit.TripId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ItineraryVisit>()
+            .HasOne<Place>()
+            .WithMany()
+            .HasForeignKey(visit => visit.PlaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ItineraryVisit>()
+            .HasIndex(visit => new
+            {
+                visit.TripId,
+                visit.VisitAt
+            })
+            .IsUnique();
 
         modelBuilder.Entity<User>()
             .HasIndex(x => x.Email)

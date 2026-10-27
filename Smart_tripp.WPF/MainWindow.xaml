@@ -183,6 +183,10 @@
                                 <Button Content="Бюджет і речі →"
                                         Tag="Budget"
                                         Click="OnNavigate"/>
+                                <Button Content="План відвідувань"
+                                        Click="OnViewItinerary"/>
+                                <Button Content="Маршрут на карті"
+                                        Click="OnOpenRouteMap"/>
                             </WrapPanel>
 
                             <DataGrid x:Name="TripsGrid"
@@ -390,7 +394,10 @@
                                 <Button Content="Деталі та відгуки"
                                         Tag="Details"
                                         Click="OnCatalogAction"/>
-
+                                <Button Content="Додати до витрат"
+                                        Click="OnAddPlaceExpense"/>
+                                <Button Content="Запланувати відвідування"
+                                        Click="OnPlanVisit"/>
                                 <Button Content="Додати / прибрати з обраного"
                                         Tag="Favorite"
                                         Click="OnCatalogAction"/>
