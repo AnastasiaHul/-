@@ -1,0 +1,204 @@
+﻿<Window x:Class="Smart_tripp.WPF.BookingCenterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Smart Trip — центр бронювань"
+        Width="1050"
+        Height="800"
+        MinWidth="850"
+        MinHeight="650"
+        WindowStartupLocation="CenterOwner"
+        Background="#F3F6F8">
+
+    <Window.Resources>
+        <Style x:Key="BookingCardButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#183B36"/>
+            <Setter Property="BorderBrush" Value="#DCE7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="MinHeight" Value="220"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment"
+                    Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CardBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="18"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="CardBorder"
+                                        Property="Background"
+                                        Value="#EAF5F0"/>
+                                <Setter TargetName="CardBorder"
+                                        Property="BorderBrush"
+                                        Value="#26776B"/>
+                            </Trigger>
+
+                            <Trigger Property="IsPressed"
+                                     Value="True">
+                                <Setter TargetName="CardBorder"
+                                        Property="Background"
+                                        Value="#D9EDE3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CardNumber" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#26776B"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,14,0,10"/>
+        </Style>
+
+        <Style x:Key="CardDescription" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="#526173"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="LineHeight" Value="23"/>
+        </Style>
+
+        <Style x:Key="CardLink" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#176B4B"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,18,0,0"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="28">
+        <Grid DockPanel.Dock="Top" Margin="8,0,8,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Центр бронювань"
+                           FontSize="30"
+                           FontWeight="Bold"
+                           Foreground="#183B36"/>
+
+                <TextBlock Text="Оберіть, що потрібно для вашої подорожі."
+                           Margin="0,8,0,0"
+                           Foreground="#526173"
+                           FontSize="14"/>
+            </StackPanel>
+
+            <Button x:Name="BackButton"
+                    Grid.Column="1"
+                    Content="← Назад"
+                    Padding="18,10"
+                    VerticalAlignment="Top"/>
+        </Grid>
+
+        <Border DockPanel.Dock="Bottom"
+                Background="#FFF4D6"
+                CornerRadius="12"
+                Padding="16"
+                Margin="8,16,8,8">
+            <TextBlock
+                Text="Навчальні бронювання зберігаються у Smart Trip. Оплата не проводиться."
+                Foreground="#795B19"
+                TextWrapping="Wrap"/>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <UniformGrid Columns="2">
+                <Button x:Name="OpenTrainsButton"
+                        Style="{StaticResource BookingCardButton}">
+                    <StackPanel>
+                        <TextBlock Text="01 / ДОРОГА"
+                                   Style="{StaticResource CardNumber}"/>
+
+                        <TextBlock Text="Поїзди"
+                                   Style="{StaticResource CardTitle}"/>
+
+                        <TextBlock
+                            Text="Знайдіть рейс між містами, виберіть вагон і вільне місце."
+                            Style="{StaticResource CardDescription}"/>
+
+                        <TextBlock Text="Знайти поїзд →"
+                                   Style="{StaticResource CardLink}"/>
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="OpenHousingButton"
+                        Style="{StaticResource BookingCardButton}">
+                    <StackPanel>
+                        <TextBlock Text="02 / ПРОЖИВАННЯ"
+                                   Style="{StaticResource CardNumber}"/>
+
+                        <TextBlock Text="Житло"
+                                   Style="{StaticResource CardTitle}"/>
+
+                        <TextBlock
+                            Text="Оберіть квартиру або апартаменти на вільні дати та перевірте вартість."
+                            Style="{StaticResource CardDescription}"/>
+
+                        <TextBlock Text="Знайти житло →"
+                                   Style="{StaticResource CardLink}"/>
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="OpenCarsButton"
+                        Style="{StaticResource BookingCardButton}">
+                    <StackPanel>
+                        <TextBlock Text="03 / ПЕРЕСУВАННЯ"
+                                   Style="{StaticResource CardNumber}"/>
+
+                        <TextBlock Text="Оренда авто"
+                                   Style="{StaticResource CardTitle}"/>
+
+                        <TextBlock
+                            Text="Знайдіть вільний автомобіль, оберіть дати й оформіть оренду."
+                            Style="{StaticResource CardDescription}"/>
+
+                        <TextBlock Text="Вибрати автомобіль →"
+                                   Style="{StaticResource CardLink}"/>
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="OpenExcursionsButton"
+                        Style="{StaticResource BookingCardButton}">
+                    <StackPanel>
+                        <TextBlock Text="04 / ВРАЖЕННЯ"
+                                   Style="{StaticResource CardNumber}"/>
+
+                        <TextBlock Text="Екскурсії"
+                                   Style="{StaticResource CardTitle}"/>
+
+                        <TextBlock
+                            Text="Відкрийте цікаві маршрути, виберіть час і забронюйте місця для своєї компанії."
+                            Style="{StaticResource CardDescription}"/>
+
+                        <TextBlock Text="Вибрати екскурсію →"
+                                   Style="{StaticResource CardLink}"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

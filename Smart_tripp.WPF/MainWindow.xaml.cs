@@ -24,39 +24,6 @@ public partial class MainWindow : Window
     private int? editingTripId;
     private int? editingPlaceId;
 
-    public MainWindow(
-        AuthService auth,
-        TripService trips,
-        PlaceService places,
-        CatalogService catalog,
-        BudgetService budget,
-        PackingService packing,
-        UserSession session,
-        IAppLogger logger,
-        ItineraryService itinerary,
-        MapRouteService mapRoutes)
-
-    {
-        this.auth = auth;
-        this.trips = trips;
-        this.places = places;
-        this.catalog = catalog;
-        this.budget = budget;
-        this.packing = packing;
-        this.session = session;
-        this.logger = logger;
-        this.itinerary = itinerary;
-        this.mapRoutes = mapRoutes;
-
-        InitializeComponent();
-
-        ClearTripEditor();
-        ClearPlaceEditor();
-        UpdateAccountNavigation();
-
-        Loaded += async (_, _) => await ExecuteAsync(SearchAsync);
-    }
-
     private async Task ExecuteAsync(Func<Task> action)
     {
         if (busy)
