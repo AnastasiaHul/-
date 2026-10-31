@@ -15,7 +15,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Бічне меню -->
         <Border Background="#122F35">
             <DockPanel Margin="20,30,20,22">
                 <StackPanel DockPanel.Dock="Top">
@@ -44,6 +43,10 @@
                             Tag="Trips"
                             Click="OnNavigate"
                             IsEnabled="False"
+                            Style="{StaticResource NavButton}"/>
+
+                    <Button Content="▤  Бронювання"
+                            Click="OnOpenTrainBooking"
                             Style="{StaticResource NavButton}"/>
 
                     <Button x:Name="PlacesNav"
@@ -78,8 +81,6 @@
         </Border>
 
         <DockPanel Grid.Column="1">
-
-            <!-- Верхня панель -->
             <Border DockPanel.Dock="Top"
                     Background="White"
                     BorderBrush="#E1E8EB"
@@ -128,7 +129,6 @@
                 </DockPanel>
             </Border>
 
-            <!-- Повідомлення програми -->
             <Border DockPanel.Dock="Bottom"
                     Background="White"
                     Padding="26,12"
@@ -140,7 +140,6 @@
                            FontSize="12"/>
             </Border>
 
-            <!-- Робочі розділи -->
             <TabControl x:Name="Tabs"
                         SelectedIndex="4"
                         Background="Transparent"
@@ -152,41 +151,30 @@
                     </Style>
                 </TabControl.Resources>
 
-                <!-- Мої подорожі -->
                 <TabItem x:Name="TripsTab"
                          Header="Мої подорожі"
                          IsEnabled="False">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24">
+                            <TextBlock Text="Мої подорожі"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Foreground="#143A3D"
+                                       Margin="4,0,0,8"/>
+
                             <TextBlock
-                                Text="Створіть подорож або виберіть рядок для редагування"
-                                FontSize="18"
-                                Margin="4,0,0,8"/>
+                                Text="Оберіть поїздку — її план, карта, витрати та речі відкриються в окремому вікні."
+                                Foreground="#64748B"
+                                Margin="4,0,0,20"/>
 
                             <WrapPanel Margin="0,0,0,16">
                                 <Button Content="＋ Створити подорож"
                                         Tag="NewTrip"
                                         Click="OnOpenDialog"/>
 
-                                <Button Content="Редагувати вибране"
-                                        Tag="EditTrip"
-                                        Click="OnOpenDialog"/>
-
-                                <Button Content="Видалити"
-                                        Tag="Delete"
-                                        Click="OnTripAction"/>
-
-                                <Button Content="Оновити"
-                                        Tag="Refresh"
-                                        Click="OnTripAction"/>
-
-                                <Button Content="Бюджет і речі →"
-                                        Tag="Budget"
-                                        Click="OnNavigate"/>
-                                <Button Content="План відвідувань"
-                                        Click="OnViewItinerary"/>
-                                <Button Content="Маршрут на карті"
-                                        Click="OnOpenRouteMap"/>
+                                <Button Content="Відкрити подорож →"
+                                        Click="OnOpenTripWorkspace"
+                                        Style="{StaticResource SecondaryButton}"/>
                             </WrapPanel>
 
                             <DataGrid x:Name="TripsGrid"
@@ -215,11 +203,10 @@
                             </DataGrid>
 
                             <TextBlock
-                                Text="Виберіть запис у таблиці, щоб редагувати його або видалити."
+                                Text="Виберіть подорож і натисніть «Відкрити подорож», щоб переглянути план, витрати та речі."
                                 Foreground="#64748B"
                                 Margin="4,12"/>
 
-                            <!-- Форма відкриватиметься в окремому вікні -->
                             <StackPanel x:Name="TripEditor"
                                         Visibility="Collapsed"
                                         Margin="0,8,0,0">
@@ -252,7 +239,6 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <!-- Місця партнера -->
                 <TabItem x:Name="PlacesTab"
                          Header="Місця партнера"
                          IsEnabled="False">
@@ -300,7 +286,7 @@
                             </DataGrid>
 
                             <TextBlock
-                                Text="Виберіть запис у таблиці, щоб редагувати його або видалити."
+                                Text="Виберіть місце в таблиці, щоб редагувати його або видалити."
                                 Foreground="#64748B"
                                 Margin="4,12"/>
 
@@ -337,50 +323,67 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <!-- Каталог -->
                 <TabItem Header="Каталог місць">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24">
-                            <TextBlock Text="Знайдіть місце для вашої подорожі"
-                                       FontSize="18"
+                            <TextBlock Text="Каталог місць"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Foreground="#143A3D"
                                        Margin="4,0,0,8"/>
 
-                            <WrapPanel>
-                                <StackPanel Width="240">
-                                    <TextBlock Text="Назва містить" Margin="5,2"/>
-                                    <TextBox x:Name="SearchText"/>
-                                </StackPanel>
+                            <TextBlock
+                                Text="Знайдіть цікаве місце та відкрийте його картку: опис, відгуки й дії для подорожі — всередині."
+                                Foreground="#64748B"
+                                Margin="4,0,0,20"/>
 
-                                <StackPanel Width="180">
-                                    <TextBlock Text="Категорія" Margin="5,2"/>
-                                    <TextBox x:Name="SearchCategory"/>
-                                </StackPanel>
+                            <Border Background="White"
+                                    CornerRadius="12"
+                                    BorderBrush="#E1E8EB"
+                                    BorderThickness="1"
+                                    Padding="16"
+                                    Margin="0,0,0,16">
+                                <WrapPanel>
+                                    <StackPanel Width="220">
+                                        <TextBlock Text="Назва місця"
+                                                   Margin="5,2"/>
+                                        <TextBox x:Name="SearchText"/>
+                                    </StackPanel>
 
-                                <StackPanel Width="180">
-                                    <TextBlock Text="Максимальна ціна ₴"
-                                               Margin="5,2"/>
-                                    <TextBox x:Name="SearchPrice"/>
-                                </StackPanel>
+                                    <StackPanel Width="160">
+                                        <TextBlock Text="Категорія"
+                                                   Margin="5,2"/>
+                                        <TextBox x:Name="SearchCategory"/>
+                                    </StackPanel>
 
-                                <CheckBox x:Name="OnlyFavorites"
-                                          Content="Лише обране"
-                                          VerticalAlignment="Bottom"
-                                          Margin="12"/>
+                                    <StackPanel Width="150">
+                                        <TextBlock Text="Ціна до, ₴"
+                                                   Margin="5,2"/>
+                                        <TextBox x:Name="SearchPrice"/>
+                                    </StackPanel>
 
-                                <Button Content="Шукати / оновити"
-                                        Tag="Search"
-                                        Click="OnCatalogAction"
-                                        VerticalAlignment="Bottom"/>
-                            </WrapPanel>
+                                    <CheckBox x:Name="OnlyFavorites"
+                                              Content="Лише обране"
+                                              VerticalAlignment="Bottom"
+                                              Margin="12,0,12,16"/>
 
-                            <DataGrid x:Name="CatalogGrid" Height="340">
+                                    <Button Content="Знайти"
+                                            Tag="Search"
+                                            Click="OnCatalogAction"
+                                            VerticalAlignment="Bottom"
+                                            Margin="3,0,3,5"/>
+                                </WrapPanel>
+                            </Border>
+
+                            <DataGrid x:Name="CatalogGrid"
+                                      Height="340">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Назва"
                                                         Binding="{Binding Name}"
                                                         Width="*"/>
                                     <DataGridTextColumn Header="Категорія"
                                                         Binding="{Binding Category}"
-                                                        Width="180"/>
+                                                        Width="170"/>
                                     <DataGridTextColumn Header="Ціна ₴"
                                                         Binding="{Binding Price, StringFormat=N2}"
                                                         Width="120"/>
@@ -390,22 +393,15 @@
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <WrapPanel>
-                                <Button Content="Деталі та відгуки"
-                                        Tag="Details"
-                                        Click="OnCatalogAction"/>
-                                <Button Content="Додати до витрат"
-                                        Click="OnAddPlaceExpense"/>
-                                <Button Content="Запланувати відвідування"
-                                        Click="OnPlanVisit"/>
-                                <Button Content="Додати / прибрати з обраного"
-                                        Tag="Favorite"
-                                        Click="OnCatalogAction"/>
-                            </WrapPanel>
+                            <Button Content="Відкрити місце →"
+                                    Click="OnOpenPlaceWorkspace"
+                                    HorizontalAlignment="Left"
+                                    Margin="3,12,0,0"/>
 
-                            <Button Content="Написати відгук"
-                                    Tag="Review"
-                                    Click="OnOpenDialog"/>
+                            <TextBlock
+                                Text="Виберіть місце в таблиці та відкрийте його картку."
+                                Foreground="#64748B"
+                                Margin="4,12"/>
 
                             <StackPanel x:Name="ReviewEditor"
                                         Visibility="Collapsed"
@@ -416,7 +412,9 @@
                                     Margin="5,12,0,4"/>
 
                                 <TextBlock Text="Оцінка" Margin="5,2"/>
-                                <ComboBox x:Name="RatingBox" SelectedIndex="4">
+
+                                <ComboBox x:Name="RatingBox"
+                                          SelectedIndex="4">
                                     <ComboBoxItem Content="1"/>
                                     <ComboBoxItem Content="2"/>
                                     <ComboBoxItem Content="3"/>
@@ -435,7 +433,6 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <!-- Бюджет та речі -->
                 <TabItem x:Name="BudgetTab"
                          Header="Бюджет та речі"
                          IsEnabled="False">
@@ -551,7 +548,8 @@
                                            Margin="5,10,0,4"
                                            FontWeight="Bold"/>
 
-                                <DataGrid x:Name="StatisticsGrid" Height="220">
+                                <DataGrid x:Name="StatisticsGrid"
+                                          Height="220">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Категорія"
                                                             Binding="{Binding Category}"
@@ -566,7 +564,6 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <!-- Головна сторінка -->
                 <TabItem>
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
@@ -601,20 +598,17 @@
                                             LineHeight="24"/>
 
                                         <WrapPanel Margin="0,20,0,0">
-                                            <Button
-                                                Content="Спланувати подорож →"
-                                                Tag="NewTrip"
-                                                Click="OnOpenDialog"/>
+                                            <Button Content="Спланувати подорож →"
+                                                    Tag="NewTrip"
+                                                    Click="OnOpenDialog"/>
 
-                                            <Button
-                                                Content="Переглянути місця"
-                                                Tag="Catalog"
-                                                Click="OnNavigate"
-                                                Style="{StaticResource SecondaryButton}"/>
+                                            <Button Content="Переглянути місця"
+                                                    Tag="Catalog"
+                                                    Click="OnNavigate"
+                                                    Style="{StaticResource SecondaryButton}"/>
                                         </WrapPanel>
                                     </StackPanel>
 
-                                    <!-- Ілюстрація гір -->
                                     <Viewbox Grid.Column="1" Margin="18">
                                         <Canvas Width="300" Height="240">
                                             <Ellipse Width="70"
@@ -660,29 +654,25 @@
                                 Margin="0,0,0,14"/>
 
                             <UniformGrid Columns="4">
-                                <Button
-                                    Content="ЛЬВІВ&#10;Архітектура й історія →"
-                                    Tag="Львів"
-                                    Click="OnDestination"
-                                    Style="{StaticResource DestinationButton}"/>
+                                <Button Content="ЛЬВІВ&#10;Архітектура й історія →"
+                                        Tag="Львів"
+                                        Click="OnDestination"
+                                        Style="{StaticResource DestinationButton}"/>
 
-                                <Button
-                                    Content="КИЇВ&#10;Ритм великого міста →"
-                                    Tag="Київ"
-                                    Click="OnDestination"
-                                    Style="{StaticResource DestinationButton}"/>
+                                <Button Content="КИЇВ&#10;Ритм великого міста →"
+                                        Tag="Київ"
+                                        Click="OnDestination"
+                                        Style="{StaticResource DestinationButton}"/>
 
-                                <Button
-                                    Content="ОДЕСА&#10;Прогулянки біля моря →"
-                                    Tag="Одеса"
-                                    Click="OnDestination"
-                                    Style="{StaticResource DestinationButton}"/>
+                                <Button Content="ОДЕСА&#10;Прогулянки біля моря →"
+                                        Tag="Одеса"
+                                        Click="OnDestination"
+                                        Style="{StaticResource DestinationButton}"/>
 
-                                <Button
-                                    Content="КАРПАТИ&#10;Ближче до природи →"
-                                    Tag="Карпати"
-                                    Click="OnDestination"
-                                    Style="{StaticResource DestinationButton}"/>
+                                <Button Content="КАРПАТИ&#10;Ближче до природи →"
+                                        Tag="Карпати"
+                                        Click="OnDestination"
+                                        Style="{StaticResource DestinationButton}"/>
                             </UniformGrid>
 
                             <TextBlock Text="Усе для вашої подорожі"
@@ -710,7 +700,6 @@
                                     Style="{StaticResource DestinationButton}"/>
                             </UniformGrid>
 
-                            <!-- Форма входу та реєстрації -->
                             <StackPanel x:Name="DialogStore"
                                         Visibility="Collapsed">
                                 <StackPanel x:Name="LoginPanel">

@@ -33,26 +33,74 @@ public static class DependencyInjection
         services.AddScoped<PackingService>();
         services.AddScoped<ItineraryService>();
         services.AddScoped<MapRouteService>();
+        services.AddScoped<TrainBookingService>();
+        services.AddScoped<AccommodationBookingService>();
+        services.AddScoped<CarBookingService>();
+        services.AddScoped<ExcursionBookingService>();
 
         services.AddScoped<
             IRepository<ItineraryVisit>,
             EfRepository<ItineraryVisit>>();
 
-        services.AddScoped<IRepository<User>, UserRepository>();
-        services.AddScoped<IRepository<Trip>, TripRepository>();
-        services.AddScoped<IRepository<Place>, PlaceRepository>();
+        services.AddScoped<
+            IRepository<TrainDeparture>,
+            EfRepository<TrainDeparture>>();
 
         services.AddScoped<
-            IRepository<Favorite>, FavoriteRepository>();
+            ITrainReservationRepository,
+            TrainReservationRepository>();
 
         services.AddScoped<
-            IRepository<Review>, ReviewRepository>();
+            IRepository<Accommodation>,
+            EfRepository<Accommodation>>();
 
         services.AddScoped<
-            IRepository<Expense>, ExpenseRepository>();
+            IAccommodationReservationRepository,
+            AccommodationReservationRepository>();
 
         services.AddScoped<
-            IRepository<PackingItem>, PackingItemRepository>();
+            IRepository<RentalCar>,
+            EfRepository<RentalCar>>();
+
+        services.AddScoped<
+            ICarReservationRepository,
+            CarReservationRepository>();
+
+        services.AddScoped<
+            IRepository<ExcursionSession>,
+            EfRepository<ExcursionSession>>();
+
+        services.AddScoped<
+            IExcursionReservationRepository,
+            ExcursionReservationRepository>();
+
+        services.AddScoped<
+            IRepository<User>,
+            UserRepository>();
+
+        services.AddScoped<
+            IRepository<Trip>,
+            TripRepository>();
+
+        services.AddScoped<
+            IRepository<Place>,
+            PlaceRepository>();
+
+        services.AddScoped<
+            IRepository<Favorite>,
+            FavoriteRepository>();
+
+        services.AddScoped<
+            IRepository<Review>,
+            ReviewRepository>();
+
+        services.AddScoped<
+            IRepository<Expense>,
+            ExpenseRepository>();
+
+        services.AddScoped<
+            IRepository<PackingItem>,
+            PackingItemRepository>();
 
         return services;
     }

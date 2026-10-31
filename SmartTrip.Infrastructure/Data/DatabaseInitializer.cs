@@ -21,17 +21,14 @@ public static class DatabaseInitializer
                     "ItineraryVisitId" INTEGER NOT NULL
                         CONSTRAINT "PK_ItineraryVisits"
                         PRIMARY KEY AUTOINCREMENT,
-
                     "TripId" INTEGER NOT NULL,
                     "PlaceId" INTEGER NOT NULL,
                     "PlaceName" TEXT NOT NULL,
                     "VisitAt" TEXT NOT NULL,
                     "Notes" TEXT NOT NULL,
-
                     FOREIGN KEY ("TripId")
                         REFERENCES "Trips" ("TripId")
                         ON DELETE CASCADE,
-
                     FOREIGN KEY ("PlaceId")
                         REFERENCES "Places" ("PlaceId")
                         ON DELETE CASCADE
@@ -46,14 +43,31 @@ public static class DatabaseInitializer
                     ON "ItineraryVisits" ("PlaceId");
                 """;
 
-            await using var transaction =
+            await using (var transaction =
                 await context.Database.BeginTransactionAsync()
+                    .ConfigureAwait(false))
+            {
+                await context.Database.ExecuteSqlRawAsync(sql)
                     .ConfigureAwait(false);
 
-            await context.Database.ExecuteSqlRawAsync(sql)
+                await transaction.CommitAsync()
+                    .ConfigureAwait(false);
+            }
+
+            await TrainDatabaseInitializer.InitializeSqliteAsync(
+                context)
                 .ConfigureAwait(false);
 
-            await transaction.CommitAsync()
+            await AccommodationDatabaseInitializer
+                .InitializeSqliteAsync(context)
+                .ConfigureAwait(false);
+
+            await CarDatabaseInitializer.InitializeSqliteAsync(
+                context)
+                .ConfigureAwait(false);
+
+            await ExcursionDatabaseInitializer
+                .InitializeSqliteAsync(context)
                 .ConfigureAwait(false);
         }
         else

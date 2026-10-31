@@ -1,0 +1,443 @@
+﻿<Window x:Class="Smart_tripp.WPF.TripWorkspaceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Моя подорож — Smart Trip"
+        Width="1120"
+        Height="820"
+        MinWidth="940"
+        MinHeight="680"
+        WindowStartupLocation="CenterOwner"
+        Background="#F3F6F8">
+
+    <Window.Resources>
+
+        <Style x:Key="SummaryCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+            <Setter Property="BorderBrush" Value="#E1E8EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#466269"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder"
+                                Background="#E5EDEF"
+                                CornerRadius="8"
+                                Padding="20,12"
+                                Margin="0,0,8,14">
+                            <ContentPresenter
+                                ContentSource="Header"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder"
+                                        Property="Background"
+                                        Value="#167D6E"/>
+                                <Setter Property="Foreground"
+                                        Value="White"/>
+                            </Trigger>
+
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder"
+                                        Property="Opacity"
+                                        Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Назва подорожі та повернення -->
+        <Grid Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="SMART TRIP / МОЯ ПОДОРОЖ"
+                           FontSize="11"
+                           FontWeight="Bold"
+                           Foreground="#167D6E"/>
+
+                <TextBlock Text="{Binding Title}"
+                           FontSize="30"
+                           FontWeight="Bold"
+                           Foreground="#143A3D"
+                           Margin="0,8,0,6"/>
+
+                <TextBlock Foreground="#64748B">
+                    <Run Text="{Binding City}"/>
+                    <Run Text="  ·  "/>
+                    <Run Text="{Binding StartDate, StringFormat=dd.MM.yyyy}"/>
+                    <Run Text=" — "/>
+                    <Run Text="{Binding EndDate, StringFormat=dd.MM.yyyy}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <Button x:Name="BackButton"
+                    Grid.Column="1"
+                    Content="← До моїх подорожей"
+                    VerticalAlignment="Top"
+                    Style="{StaticResource SecondaryButton}"/>
+        </Grid>
+
+        <!-- Коротка інформація про бюджет -->
+        <Grid Grid.Row="1" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Text="ЗАПЛАНОВАНИЙ БЮДЖЕТ"
+                               Foreground="#64748B"
+                               FontSize="11"/>
+
+                    <TextBlock x:Name="PlannedText"
+                               Text="—"
+                               FontSize="25"
+                               FontWeight="Bold"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Text="ВИТРАЧЕНО"
+                               Foreground="#64748B"
+                               FontSize="11"/>
+
+                    <TextBlock x:Name="SpentText"
+                               Text="—"
+                               FontSize="25"
+                               FontWeight="Bold"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Style="{StaticResource SummaryCard}"
+                    Margin="0"
+                    Background="#E3F2EC">
+                <StackPanel>
+                    <TextBlock Text="ЗАЛИШОК"
+                               Foreground="#46695D"
+                               FontSize="11"/>
+
+                    <TextBlock x:Name="RemainingText"
+                               Text="—"
+                               Foreground="#167D6E"
+                               FontSize="25"
+                               FontWeight="Bold"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Кожна вкладка показує лише свої дії -->
+        <TabControl x:Name="WorkspaceTabs"
+                    Grid.Row="2"
+                    Background="Transparent"
+                    BorderThickness="0">
+
+            <!-- Огляд -->
+            <TabItem Header="Огляд">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Border Background="White"
+                            CornerRadius="12"
+                            Padding="26">
+                        <StackPanel>
+                            <TextBlock Text="Ваша подорож"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBlock
+                                Text="Плануйте відвідування, контролюйте витрати та збирайте речі — кожна дія у своїй вкладці."
+                                Foreground="#64748B"
+                                Margin="0,10,0,24"/>
+
+                            <TextBlock Text="Кількість учасників"
+                                       Foreground="#64748B"/>
+
+                            <TextBlock Text="{Binding PeopleCount}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,6,0,20"/>
+
+                            <TextBlock Text="Інтереси та побажання"
+                                       Foreground="#64748B"/>
+
+                            <TextBlock Text="{Binding Interests}"
+                                       Margin="0,8,0,24"/>
+
+                            <WrapPanel>
+                                <Button x:Name="EditTripButton"
+                                        Content="Редагувати подорож"
+                                        Style="{StaticResource SecondaryButton}"/>
+
+                                <Button x:Name="DeleteTripButton"
+                                        Content="Видалити подорож"
+                                        Background="#FFF1F0"
+                                        Foreground="#B5473C"
+                                        BorderBrush="#F0D3CF"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- План і карта -->
+            <TabItem Header="План і карта">
+                <Grid Background="White">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="План відвідувань"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBlock
+                                Text="Відвідування впорядковані за датою та часом."
+                                Foreground="#64748B"
+                                Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <Button x:Name="OpenRouteButton"
+                                Grid.Column="1"
+                                Content="Маршрут на карті"
+                                VerticalAlignment="Top"/>
+                    </Grid>
+
+                    <DataGrid x:Name="VisitsGrid"
+                              Grid.Row="1"
+                              Margin="20,0,20,12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Header="Дата і час"
+                                Binding="{Binding VisitAt, StringFormat=dd.MM.yyyy HH:mm}"
+                                Width="160"/>
+
+                            <DataGridTextColumn
+                                Header="Місце"
+                                Binding="{Binding PlaceName}"
+                                Width="*"/>
+
+                            <DataGridTextColumn
+                                Header="Примітка"
+                                Binding="{Binding Notes}"
+                                Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <WrapPanel Grid.Row="2" Margin="17,0,17,18">
+                        <Button x:Name="BrowseCatalogButton"
+                                Content="＋ Вибрати місце з каталогу"/>
+
+                        <Button x:Name="RemoveVisitButton"
+                                Content="Прибрати вибране"
+                                Style="{StaticResource SecondaryButton}"/>
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Витрати -->
+            <TabItem Header="Витрати">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Background="White" Margin="0">
+                        <TextBlock Text="Витрати подорожі"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Margin="24,20,24,4"/>
+
+                        <TextBlock
+                            Text="Усі витрати цієї поїздки в одному місці."
+                            Foreground="#64748B"
+                            Margin="24,0,24,12"/>
+
+                        <DataGrid x:Name="TripExpensesGrid"
+                                  Height="240"
+                                  Margin="20,0,20,16">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn
+                                    Header="Дата"
+                                    Binding="{Binding Date, StringFormat=dd.MM.yyyy}"
+                                    Width="115"/>
+
+                                <DataGridTextColumn
+                                    Header="Категорія"
+                                    Binding="{Binding Category}"
+                                    Width="150"/>
+
+                                <DataGridTextColumn
+                                    Header="Опис"
+                                    Binding="{Binding Description}"
+                                    Width="*"/>
+
+                                <DataGridTextColumn
+                                    Header="Сума ₴"
+                                    Binding="{Binding Amount, StringFormat=N2}"
+                                    Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Expander Header="＋ Додати витрату"
+                                  Margin="24,0,24,20">
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Категорія"/>
+                                <TextBox x:Name="ExpenseCategoryBox"/>
+
+                                <TextBlock Text="Опис" Margin="0,10,0,0"/>
+                                <TextBox x:Name="ExpenseDescriptionBox"/>
+
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Margin="0,0,12,0">
+                                        <TextBlock Text="Сума ₴"/>
+                                        <TextBox x:Name="ExpenseAmountBox"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Дата"/>
+                                        <DatePicker x:Name="ExpenseDateBox"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Button x:Name="SaveExpenseButton"
+                                        Content="Зберегти витрату"
+                                        HorizontalAlignment="Left"
+                                        Margin="3,14,0,0"/>
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander Header="Статистика за категоріями"
+                                  Margin="24,0,24,24">
+                            <DataGrid x:Name="CategoryStatisticsGrid"
+                                      Height="180">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn
+                                        Header="Категорія"
+                                        Binding="{Binding Category}"
+                                        Width="*"/>
+
+                                    <DataGridTextColumn
+                                        Header="Витрачено ₴"
+                                        Binding="{Binding Total, StringFormat=N2}"
+                                        Width="150"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Речі -->
+            <TabItem Header="Речі">
+                <Grid Background="White">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Margin="24,20,24,16">
+                        <TextBlock Text="Збираємося в дорогу"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"/>
+
+                        <TextBlock
+                            Text="Додавайте необхідні речі та позначайте вже спаковані."
+                            Foreground="#64748B"
+                            Margin="0,6,0,0"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" Margin="20,0,20,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="PackingNameBox"
+                                 VerticalAlignment="Center"/>
+
+                        <Button x:Name="AddPackingButton"
+                                Grid.Column="1"
+                                Content="＋ Додати річ"/>
+                    </Grid>
+
+                    <DataGrid x:Name="TripPackingGrid"
+                              Grid.Row="2"
+                              Margin="20,0,20,12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Header="Річ"
+                                Binding="{Binding Name}"
+                                Width="*"/>
+
+                            <DataGridCheckBoxColumn
+                                Header="Спаковано"
+                                Binding="{Binding IsPacked}"
+                                Width="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <WrapPanel Grid.Row="3" Margin="17,0,17,18">
+                        <Button x:Name="TogglePackingButton"
+                                Content="Зібрано / не зібрано"/>
+
+                        <Button x:Name="DeletePackingButton"
+                                Content="Видалити вибране"
+                                Style="{StaticResource SecondaryButton}"/>
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+        <TextBlock x:Name="WorkspaceStatusText"
+                   Grid.Row="3"
+                   Text="Усе для вашої подорожі — в одному вікні."
+                   Foreground="#64748B"
+                   Margin="4,16,0,0"/>
+    </Grid>
+</Window>
