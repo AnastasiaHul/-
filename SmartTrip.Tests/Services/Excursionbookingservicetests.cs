@@ -11,7 +11,6 @@ using SmartTrip.Domain.Entities;
 
 namespace SmartTrip.Tests.Services;
 
-// Спільне налаштування: поточний користувач — турист (Id = 1).
 public abstract class ExcursionBookingTestBase
 {
     protected readonly Mock<IRepository<ExcursionSession>> mockExcursions;
@@ -87,7 +86,7 @@ public abstract class ExcursionBookingTestBase
         };
     }
 
-    // Мок застосовує реальний предикат сервісу до "бази" екскурсій.
+ 
     protected void SetupExcursions(List<ExcursionSession> all)
     {
         mockExcursions

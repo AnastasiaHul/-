@@ -11,7 +11,7 @@ using SmartTrip.Domain.Entities;
 
 namespace SmartTrip.Tests.Services;
 
-// Спільне налаштування: поточний користувач — турист (Id = 1).
+
 public abstract class TrainBookingTestBase
 {
     protected readonly Mock<IRepository<TrainDeparture>> mockDepartures;
@@ -91,7 +91,7 @@ public abstract class TrainBookingTestBase
         };
     }
 
-    // Мок застосовує реальний предикат сервісу до "бази" рейсів.
+ 
     protected void SetupDepartures(List<TrainDeparture> all)
     {
         mockDepartures
