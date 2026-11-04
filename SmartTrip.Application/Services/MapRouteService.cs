@@ -1,129 +1,89 @@
 ﻿using SmartTrip.Application.Contracts;
 using SmartTrip.Domain.Entities;
+using SmartTrip.Application.Common;
 
 namespace SmartTrip.Application.Services;
-
-public sealed class MapRouteService(
-    IRepository<Place> places,
-    TripService trips,
-    ItineraryService itinerary,
-    ServiceOperations operations)
+public sealed class MapRouteService(IRepository<Place> places, TripService trips, ItineraryService itinerary, ServiceOperations operations)
 {
-    public Task<string> BuildUrlAsync(
-        int tripId,
-        DateTime day,
-        string travelMode)
+    public Task<Result<string>> BuildUrlAsync(int tripId, DateTime day, string travelMode)
     {
-        return operations.RunAsync(
-            "BuildTripRoute",
-            async () =>
+        return operations.RunResultAsync<string>("BuildTripRoute", async () =>
+        {
+            var check1 = await trips.OwnedAsync(tripId).ConfigureAwait(false);
+            if (check1.IsFailure)
             {
-                // Перевіряємо власника подорожі.
-                Trip trip = await trips.OwnedAsync(tripId)
-                    .ConfigureAwait(false);
+                return new Failure(check1.Error);
+            }
 
-                if (day == default
-                    || day.Date < trip.StartDate.Date
-                    || day.Date > trip.EndDate.Date)
+            // Перевіряємо власника подорожі.
+            Trip trip = check1.Value!;
+            if (day == default || day.Date < trip.StartDate.Date || day.Date > trip.EndDate.Date)
+            {
+                return new Failure("Виберіть день у межах подорожі.");
+            }
+
+            if (travelMode != "walking" && travelMode != "driving")
+            {
+                return new Failure("Виберіть спосіб пересування.");
+            }
+
+            var check2 = await itinerary.ListAsync(tripId).ConfigureAwait(false);
+            if (check2.IsFailure)
+            {
+                return new Failure(check2.Error);
+            }
+
+            // Отримуємо готовий план подорожі.
+            IReadOnlyList<ItineraryVisit> allVisits = check2.Value!;
+            // Залишаємо місця вибраного дня.
+            List<ItineraryVisit> visits = allVisits.Where(visit => visit.VisitAt.Date == day.Date).OrderBy(visit => visit.VisitAt).ToList();
+            if (visits.Count < 2)
+            {
+                return new Failure("Для маршруту додайте до плану " + "щонайменше два місця на цей день.");
+            }
+
+            if (visits.Count > 11)
+            {
+                return new Failure("Ця версія підтримує до 11 місць " + "в одному маршруті за день.");
+            }
+
+            var addresses = new List<string>();
+            foreach (ItineraryVisit visit in visits)
+            {
+                Place? place = await places.FindAsync(visit.PlaceId).ConfigureAwait(false);
+                if (place is null)
                 {
-                    throw new ArgumentException(
-                        "Виберіть день у межах подорожі.");
+                    return new Failure($"Місце «{visit.PlaceName}» " + "не знайдено.");
                 }
 
-                if (travelMode != "walking"
-                    && travelMode != "driving")
+                if (string.IsNullOrWhiteSpace(place.Address))
                 {
-                    throw new ArgumentException(
-                        "Виберіть спосіб пересування.");
+                    return new Failure($"Для місця «{place.Name}» " + "партнер має вказати адресу.");
                 }
 
-                // Отримуємо готовий план подорожі.
-                IReadOnlyList<ItineraryVisit> allVisits =
-                    await itinerary.ListAsync(tripId)
-                        .ConfigureAwait(false);
+                // Адреса має містити місто,
+                // вулицю та номер будинку.
+                addresses.Add(place.Address.Trim());
+            }
 
-                // Залишаємо місця вибраного дня.
-                List<ItineraryVisit> visits = allVisits
-                    .Where(visit =>
-                        visit.VisitAt.Date == day.Date)
-                    .OrderBy(visit => visit.VisitAt)
-                    .ToList();
+            // Перше місце — початок маршруту.
+            string origin = Uri.EscapeDataString(addresses[0]);
+            // Останнє місце — кінець маршруту.
+            string destination = Uri.EscapeDataString(addresses[^1]);
+            string url = "https://www.google.com/maps/dir/" + "?api=1" + $"&origin={origin}" + $"&destination={destination}" + $"&travelmode={travelMode}";
+            // Решта місць — проміжні зупинки.
+            if (addresses.Count > 2)
+            {
+                string intermediate = string.Join("|", addresses.Skip(1).Take(addresses.Count - 2));
+                url += "&waypoints=" + Uri.EscapeDataString(intermediate);
+            }
 
-                if (visits.Count < 2)
-                {
-                    throw new ArgumentException(
-                        "Для маршруту додайте до плану "
-                        + "щонайменше два місця на цей день.");
-                }
+            if (url.Length > 2048)
+            {
+                return new Failure("Посилання на маршрут занадто довге. " + "Зменште кількість місць на цей день " + "або скоротіть їхні адреси.");
+            }
 
-                if (visits.Count > 11)
-                {
-                    throw new ArgumentException(
-                        "Ця версія підтримує до 11 місць "
-                        + "в одному маршруті за день.");
-                }
-
-                var addresses = new List<string>();
-
-                foreach (ItineraryVisit visit in visits)
-                {
-                    Place place =
-                        await places.FindAsync(visit.PlaceId)
-                            .ConfigureAwait(false)
-                        ?? throw new ArgumentException(
-                            $"Місце «{visit.PlaceName}» "
-                            + "не знайдено.");
-
-                    if (string.IsNullOrWhiteSpace(
-                        place.Address))
-                    {
-                        throw new ArgumentException(
-                            $"Для місця «{place.Name}» "
-                            + "партнер має вказати адресу.");
-                    }
-
-                    // Адреса має містити місто,
-                    // вулицю та номер будинку.
-                    addresses.Add(place.Address.Trim());
-                }
-
-                // Перше місце — початок маршруту.
-                string origin = Uri.EscapeDataString(
-                    addresses[0]);
-
-                // Останнє місце — кінець маршруту.
-                string destination = Uri.EscapeDataString(
-                    addresses[^1]);
-
-                string url =
-                    "https://www.google.com/maps/dir/"
-                    + "?api=1"
-                    + $"&origin={origin}"
-                    + $"&destination={destination}"
-                    + $"&travelmode={travelMode}";
-
-                // Решта місць — проміжні зупинки.
-                if (addresses.Count > 2)
-                {
-                    string intermediate = string.Join(
-                        "|",
-                        addresses
-                            .Skip(1)
-                            .Take(addresses.Count - 2));
-
-                    url += "&waypoints="
-                        + Uri.EscapeDataString(intermediate);
-                }
-
-                if (url.Length > 2048)
-                {
-                    throw new ArgumentException(
-                        "Посилання на маршрут занадто довге. "
-                        + "Зменште кількість місць на цей день "
-                        + "або скоротіть їхні адреси.");
-                }
-
-                return url;
-            });
+            return Result<string>.Success(url);
+        });
     }
 }

@@ -1,4 +1,5 @@
-﻿using SmartTrip.Application.Contracts;
+﻿using SmartTrip.Application.Common;
+using SmartTrip.Application.Contracts;
 
 namespace SmartTrip.Application.Services;
 
@@ -6,18 +7,21 @@ public sealed class ServiceOperations(
     IAppLogger logger,
     UserSession session)
 {
-    public async Task<T> RunAsync<T>(
+    public async Task<Result<T>> RunResultAsync<T>(
         string action,
-        Func<Task<T>> work)
+        Func<Task<Result<T>>> work)
     {
         int? actorId = session.CurrentUser?.UserId;
 
         try
         {
-            T result = await work().ConfigureAwait(false);
+            Result<T> result = await work()
+                .ConfigureAwait(false);
 
-            logger.Information(
+            LogResult(
                 action,
+                result.IsSuccess,
+                result.Error,
                 session.CurrentUser?.UserId ?? actorId);
 
             return result;
@@ -29,16 +33,33 @@ public sealed class ServiceOperations(
         }
     }
 
-    public Task RunAsync(string action, Func<Task> work)
+    public async Task<Result> RunResultAsync(
+        string action,
+        Func<Task<Result>> work)
     {
-        return RunAsync(action, async () =>
+        int? actorId = session.CurrentUser?.UserId;
+
+        try
         {
-            await work().ConfigureAwait(false);
-            return true;
-        });
+            Result result = await work()
+                .ConfigureAwait(false);
+
+            LogResult(
+                action,
+                result.IsSuccess,
+                result.Error,
+                session.CurrentUser?.UserId ?? actorId);
+
+            return result;
+        }
+        catch (Exception exception)
+        {
+            logger.Error(exception, action, actorId);
+            throw;
+        }
     }
 
-    public static string Required(
+    public static Result<string> TryRequired(
         string? value,
         string field,
         int max = 200)
@@ -47,14 +68,14 @@ public sealed class ServiceOperations(
 
         if (result.Length == 0 || result.Length > max)
         {
-            throw new ArgumentException(
+            return Result<string>.Failure(
                 $"{field}: введіть від 1 до {max} символів.");
         }
 
-        return result;
+        return Result<string>.Success(result);
     }
 
-    public static decimal Money(
+    public static Result<decimal> TryMoney(
         decimal value,
         bool allowZero = true)
     {
@@ -63,12 +84,25 @@ public sealed class ServiceOperations(
             || value > 100000000
             || decimal.Round(value, 2) != value)
         {
-            throw new ArgumentException(
+            return Result<decimal>.Failure(
                 "Сума має бути невід’ємною, не перевищувати "
                 + "100 000 000 і мати максимум 2 знаки після коми. "
                 + "Для витрати сума має бути більшою за нуль.");
         }
 
-        return value;
+        return Result<decimal>.Success(value);
+    }
+
+    private void LogResult(
+        string action,
+        bool isSuccess,
+        string error,
+        int? actorId)
+    {
+        string message = isSuccess
+            ? action
+            : $"{action}.ValidationFailed: {error}";
+
+        logger.Information(message, actorId);
     }
 }

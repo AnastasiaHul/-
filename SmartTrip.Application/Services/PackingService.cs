@@ -1,104 +1,99 @@
 ﻿using SmartTrip.Application.Contracts;
 using SmartTrip.Domain.Entities;
+using SmartTrip.Application.Common;
 
 namespace SmartTrip.Application.Services;
-
-public sealed class PackingService(
-    IRepository<PackingItem> items,
-    TripService trips,
-    ServiceOperations operations)
+public sealed class PackingService(IRepository<PackingItem> items, TripService trips, ServiceOperations operations)
 {
-    public Task<IReadOnlyList<PackingItem>> ListAsync(
-        int tripId)
+    public Task<Result<IReadOnlyList<PackingItem>>> ListAsync(int tripId)
     {
-        return operations.RunAsync(
-            "ListPackingItems",
-            async () =>
+        return operations.RunResultAsync<IReadOnlyList<PackingItem>>("ListPackingItems", async () =>
+        {
+            var check1 = await trips.OwnedAsync(tripId).ConfigureAwait(false);
+            if (check1.IsFailure)
             {
-                await trips.OwnedAsync(tripId)
-                    .ConfigureAwait(false);
+                return new Failure(check1.Error);
+            }
 
-                return await items.ListAsync(
-                    x => x.TripId == tripId)
-                    .ConfigureAwait(false);
-            });
+            return Result<IReadOnlyList<PackingItem>>.Success(await items.ListAsync(x => x.TripId == tripId).ConfigureAwait(false));
+        });
     }
 
-    public Task AddAsync(int tripId, string name)
+    public Task<Result> AddAsync(int tripId, string name)
     {
-        return operations.RunAsync(
-            "AddPackingItem",
-            async () =>
+        return operations.RunResultAsync("AddPackingItem", async () =>
+        {
+            var check2 = await trips.OwnedAsync(tripId).ConfigureAwait(false);
+            if (check2.IsFailure)
             {
-                await trips.OwnedAsync(tripId)
-                    .ConfigureAwait(false);
+                return new Failure(check2.Error);
+            }
 
-                string validName =
-                    ServiceOperations.Required(
-                        name, "Назва речі", 150);
+            var check3 = ServiceOperations.TryRequired(name, "Назва речі", 150);
+            if (check3.IsFailure)
+            {
+                return new Failure(check3.Error);
+            }
 
-                IReadOnlyList<PackingItem> existing =
-                    await items.ListAsync(
-                        x => x.TripId == tripId)
-                    .ConfigureAwait(false);
+            string validName = check3.Value!;
+            IReadOnlyList<PackingItem> existing = await items.ListAsync(x => x.TripId == tripId).ConfigureAwait(false);
+            if (existing.Any(x => string.Equals(x.Name, validName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return new Failure("Така річ уже є у списку.");
+            }
 
-                if (existing.Any(x => string.Equals(
-                    x.Name,
-                    validName,
-                    StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw new ArgumentException(
-                        "Така річ уже є у списку.");
-                }
-
-                await items.AddAsync(new PackingItem
-                {
-                    TripId = tripId,
-                    Name = validName
-                }).ConfigureAwait(false);
-            });
+            await items.AddAsync(new PackingItem { TripId = tripId, Name = validName }).ConfigureAwait(false);
+            return Result.Success();
+        });
     }
 
-    public Task ToggleAsync(int id)
+    public Task<Result> ToggleAsync(int id)
     {
-        return operations.RunAsync(
-            "TogglePackingItem",
-            async () =>
+        return operations.RunResultAsync("TogglePackingItem", async () =>
+        {
+            var check4 = await OwnedAsync(id).ConfigureAwait(false);
+            if (check4.IsFailure)
             {
-                PackingItem item = await OwnedAsync(id)
-                    .ConfigureAwait(false);
+                return new Failure(check4.Error);
+            }
 
-                item.IsPacked = !item.IsPacked;
-
-                await items.UpdateAsync(item)
-                    .ConfigureAwait(false);
-            });
+            PackingItem item = check4.Value!;
+            item.IsPacked = !item.IsPacked;
+            await items.UpdateAsync(item).ConfigureAwait(false);
+            return Result.Success();
+        });
     }
 
-    public Task DeleteAsync(int id)
+    public Task<Result> DeleteAsync(int id)
     {
-        return operations.RunAsync(
-            "DeletePackingItem",
-            async () =>
+        return operations.RunResultAsync("DeletePackingItem", async () =>
+        {
+            var check5 = await OwnedAsync(id).ConfigureAwait(false);
+            if (check5.IsFailure)
             {
-                PackingItem item = await OwnedAsync(id)
-                    .ConfigureAwait(false);
+                return new Failure(check5.Error);
+            }
 
-                await items.DeleteAsync(item)
-                    .ConfigureAwait(false);
-            });
+            PackingItem item = check5.Value!;
+            await items.DeleteAsync(item).ConfigureAwait(false);
+            return Result.Success();
+        });
     }
 
-    private async Task<PackingItem> OwnedAsync(int id)
+    private async Task<Result<PackingItem>> OwnedAsync(int id)
     {
-        PackingItem item = await items.FindAsync(id)
-            .ConfigureAwait(false)
-            ?? throw new ArgumentException(
-                "Річ не знайдена.");
+        PackingItem? item = await items.FindAsync(id).ConfigureAwait(false);
+        if (item is null)
+        {
+            return new Failure("Річ не знайдена.");
+        }
 
-        await trips.OwnedAsync(item.TripId)
-            .ConfigureAwait(false);
+        var check6 = await trips.OwnedAsync(item.TripId).ConfigureAwait(false);
+        if (check6.IsFailure)
+        {
+            return new Failure(check6.Error);
+        }
 
-        return item;
+        return Result<PackingItem>.Success(item);
     }
 }

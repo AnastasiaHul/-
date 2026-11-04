@@ -1,61 +1,56 @@
 ﻿using System.Globalization;
 using System.Windows.Controls;
+using SmartTrip.Application.Common;
 
 namespace Smart_tripp.WPF;
-
 internal static class UiInput
 {
-    public static decimal Money(TextBox box)
+    public static Result<decimal> Money(TextBox box)
     {
         string value = box.Text.Trim().Replace(',', '.');
-
-        if (!decimal.TryParse(
-            value,
-            NumberStyles.AllowDecimalPoint
-                | NumberStyles.AllowLeadingSign,
-            CultureInfo.InvariantCulture,
-            out decimal amount))
+        if (!decimal.TryParse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out decimal amount))
         {
-            throw new ArgumentException(
-                "Введіть суму числом, наприклад 1500,50.");
+            return new Failure("Введіть суму числом, наприклад 1500,50.");
         }
 
         return amount;
     }
 
-    public static int Integer(TextBox box)
+    public static Result<int> Integer(TextBox box)
     {
-        if (!int.TryParse(
-            box.Text.Trim(),
-            NumberStyles.Integer,
-            CultureInfo.InvariantCulture,
-            out int result))
+        if (!int.TryParse(box.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
         {
-            throw new ArgumentException(
-                "Введіть кількість людей цілим числом.");
+            return new Failure("Введіть кількість людей цілим числом.");
         }
 
         return result;
     }
 
-    public static DateTime Date(DatePicker picker)
+    public static Result<DateTime> Date(DatePicker picker)
     {
-        return picker.SelectedDate
-            ?? throw new ArgumentException(
-                "Виберіть дату.");
+        var value1 = picker.SelectedDate;
+        if (value1 is null)
+        {
+            return new Failure("Виберіть дату.");
+        }
+
+        return value1.Value;
     }
 
-    public static T Selected<T>(DataGrid grid)
+    public static Result<T> Selected<T>(DataGrid grid)
         where T : class
     {
-        return grid.SelectedItem as T
-            ?? throw new ArgumentException(
-                "Спочатку виберіть рядок у таблиці.");
+        var value2 = grid.SelectedItem as T;
+        if (value2 is null)
+        {
+            return new Failure("Спочатку виберіть рядок у таблиці.");
+        }
+
+        return value2;
     }
 
     public static string Action(object sender)
     {
-        return ((Button)sender).Tag?.ToString()
-            ?? string.Empty;
+        return ((Button)sender).Tag?.ToString() ?? string.Empty;
     }
 }
