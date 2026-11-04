@@ -6,51 +6,32 @@ using SmartTrip.Application.Services;
 using SmartTrip.Domain.Entities;
 
 namespace Smart_tripp.WPF;
-
 public partial class TrainBookingWindow : Window
 {
     private readonly TrainBookingService booking;
     private readonly TripService trips;
     private readonly UserSession session;
     private readonly IAppLogger logger;
-
     private bool busy;
-
-    public TrainBookingWindow(
-        TrainBookingService booking,
-        TripService trips,
-        UserSession session,
-        IAppLogger logger)
+    private bool validationFailed;
+    public TrainBookingWindow(TrainBookingService booking, TripService trips, UserSession session, IAppLogger logger)
     {
         this.booking = booking;
         this.trips = trips;
         this.session = session;
         this.logger = logger;
-
         InitializeComponent();
-
         DepartureCityBox.Text = "Львів";
         ArrivalCityBox.Text = "Київ";
-
         DepartureDatePicker.DisplayDateStart = DateTime.Today;
-        DepartureDatePicker.DisplayDateEnd =
-            DateTime.Today.AddDays(59);
-
-        DepartureDatePicker.SelectedDate =
-            DateTime.Today.AddDays(1);
-
+        DepartureDatePicker.DisplayDateEnd = DateTime.Today.AddDays(59);
+        DepartureDatePicker.SelectedDate = DateTime.Today.AddDays(1);
         BackButton.Click += (_, _) => Close();
-
-        SearchTrainsButton.Click += async (_, _) =>
-            await ExecuteAsync(SearchAsync);
-
-        ReserveTrainButton.Click += async (_, _) =>
-            await ExecuteAsync(ReserveAsync);
-
+        SearchTrainsButton.Click += async (_, _) => await ExecuteAsync(SearchAsync);
+        ReserveTrainButton.Click += async (_, _) => await ExecuteAsync(ReserveAsync);
         DeparturesGrid.SelectionChanged += OnDepartureChanged;
         WagonBox.SelectionChanged += OnWagonChanged;
         BookingTripBox.SelectionChanged += OnTripChanged;
-
         Closing += (_, e) =>
         {
             if (busy)
@@ -58,9 +39,7 @@ public partial class TrainBookingWindow : Window
                 e.Cancel = true;
             }
         };
-
-        Loaded += async (_, _) =>
-            await ExecuteAsync(LoadAsync);
+        Loaded += async (_, _) => await ExecuteAsync(LoadAsync);
     }
 
     private async Task ExecuteAsync(Func<Task> action)
@@ -71,35 +50,20 @@ public partial class TrainBookingWindow : Window
         }
 
         busy = true;
+        validationFailed = false;
         IsEnabled = false;
         BookingStatusText.Text = "Виконується…";
-
         try
         {
             await action();
-
-            BookingStatusText.Text = "Готово.";
+            if (!validationFailed) { BookingStatusText.Text = "Готово."; }
         }
         catch (Exception exception)
         {
-            logger.Error(
-                exception,
-                "TrainBooking.Window",
-                session.CurrentUser?.UserId);
-
-            string message = exception is ArgumentException
-                or UnauthorizedAccessException
-                ? exception.Message
-                : "Не вдалося виконати дію. Деталі збережено в журналі.";
-
+            logger.Error(exception, "TrainBooking.Window", session.CurrentUser?.UserId);
+            string message = exception is ArgumentException or UnauthorizedAccessException ? exception.Message : "Не вдалося виконати дію. Деталі збережено в журналі.";
             BookingStatusText.Text = message;
-
-            MessageBox.Show(
-                this,
-                message,
-                "Бронювання поїзда",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            MessageBox.Show(this, message, "Бронювання поїзда", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
@@ -110,31 +74,29 @@ public partial class TrainBookingWindow : Window
 
     private async Task LoadAsync()
     {
-        session.RequireRole("Tourist");
+        var check1 = session.TryRequireRole("Tourist");
+        if (check1.IsFailure)
+        {
+            ShowValidationError(check1.Error, log: true);
+            return;
+        }
 
-        PassengerNameBox.Text =
-            session.CurrentUser?.FirstName ?? string.Empty;
+        PassengerNameBox.Text = session.CurrentUser?.FirstName ?? string.Empty;
+        var check2 = await trips.ListAsync();
+        if (check2.IsFailure)
+        {
+            ShowValidationError(check2.Error, log: false);
+            return;
+        }
 
-        IReadOnlyList<Trip> availableTrips =
-            await trips.ListAsync();
-
-        BookingTripBox.ItemsSource = availableTrips
-            .OrderByDescending(x => x.StartDate)
-            .ToList();
-
-        BookingTripBox.SelectedItem = availableTrips
-            .Where(x => x.EndDate.Date >= DateTime.Today)
-            .OrderBy(x => x.StartDate)
-            .FirstOrDefault();
-
+        IReadOnlyList<Trip> availableTrips = check2.Value!;
+        BookingTripBox.ItemsSource = availableTrips.OrderByDescending(x => x.StartDate).ToList();
+        BookingTripBox.SelectedItem = availableTrips.Where(x => x.EndDate.Date >= DateTime.Today).OrderBy(x => x.StartDate).FirstOrDefault();
         if (BookingTripBox.SelectedItem is Trip trip)
         {
-            if (trip.StartDate.Date >= DateTime.Today
-                && trip.StartDate.Date
-                    <= DateTime.Today.AddDays(59))
+            if (trip.StartDate.Date >= DateTime.Today && trip.StartDate.Date <= DateTime.Today.AddDays(59))
             {
-                DepartureDatePicker.SelectedDate =
-                    trip.StartDate.Date;
+                DepartureDatePicker.SelectedDate = trip.StartDate.Date;
             }
 
             await RefreshReservationsAsync();
@@ -143,30 +105,29 @@ public partial class TrainBookingWindow : Window
 
     private async Task SearchAsync()
     {
-        DateTime date = DepartureDatePicker.SelectedDate
-            ?? throw new ArgumentException(
-                "Оберіть дату відправлення.");
+        DateTime? date = DepartureDatePicker.SelectedDate;
+        if (date is null)
+        {
+            ShowValidationError("Оберіть дату відправлення.", log: true);
+            return;
+        }
 
         ClearSeatSelection();
         BookingConfirmationText.Text = string.Empty;
         DeparturesGrid.ItemsSource = null;
+        var check3 = await booking.SearchAsync(DepartureCityBox.Text, ArrivalCityBox.Text, date.Value);
+        if (check3.IsFailure)
+        {
+            ShowValidationError(check3.Error, log: false);
+            return;
+        }
 
-        IReadOnlyList<TrainDeparture> result =
-            await booking.SearchAsync(
-                DepartureCityBox.Text,
-                ArrivalCityBox.Text,
-                date);
-
+        IReadOnlyList<TrainDeparture> result = check3.Value!;
         DeparturesGrid.ItemsSource = result;
-
-        SelectedTrainText.Text = result.Count == 0
-            ? "За цим напрямком і датою рейсів немає."
-            : "Виберіть рейс у таблиці.";
+        SelectedTrainText.Text = result.Count == 0 ? "За цим напрямком і датою рейсів немає." : "Виберіть рейс у таблиці.";
     }
 
-    private async void OnDepartureChanged(
-        object sender,
-        SelectionChangedEventArgs e)
+    private async void OnDepartureChanged(object sender, SelectionChangedEventArgs e)
     {
         if (busy)
         {
@@ -176,36 +137,20 @@ public partial class TrainBookingWindow : Window
         await ExecuteAsync(async () =>
         {
             ClearSeatSelection();
-
-            if (DeparturesGrid.SelectedItem
-                is not TrainDeparture departure)
+            if (DeparturesGrid.SelectedItem is not TrainDeparture departure)
             {
-                SelectedTrainText.Text =
-                    "Спочатку виберіть рейс у таблиці.";
-
+                SelectedTrainText.Text = "Спочатку виберіть рейс у таблиці.";
                 return;
             }
 
-            SelectedTrainText.Text =
-                $"Поїзд {departure.TrainNumber} · "
-                + $"{departure.DepartureCity} → "
-                + $"{departure.ArrivalCity} · "
-                + $"{departure.DepartureAt:dd.MM.yyyy HH:mm} · "
-                + $"{departure.TicketPrice:N2} ₴";
-
-            WagonBox.ItemsSource = Enumerable
-                .Range(1, departure.WagonCount)
-                .ToList();
-
+            SelectedTrainText.Text = $"Поїзд {departure.TrainNumber} · " + $"{departure.DepartureCity} → " + $"{departure.ArrivalCity} · " + $"{departure.DepartureAt:dd.MM.yyyy HH:mm} · " + $"{departure.TicketPrice:N2} ₴";
+            WagonBox.ItemsSource = Enumerable.Range(1, departure.WagonCount).ToList();
             WagonBox.SelectedIndex = 0;
-
             await RefreshSeatsAsync();
         });
     }
 
-    private async void OnWagonChanged(
-        object sender,
-        SelectionChangedEventArgs e)
+    private async void OnWagonChanged(object sender, SelectionChangedEventArgs e)
     {
         if (busy)
         {
@@ -215,9 +160,7 @@ public partial class TrainBookingWindow : Window
         await ExecuteAsync(RefreshSeatsAsync);
     }
 
-    private async void OnTripChanged(
-        object sender,
-        SelectionChangedEventArgs e)
+    private async void OnTripChanged(object sender, SelectionChangedEventArgs e)
     {
         if (busy)
         {
@@ -236,95 +179,94 @@ public partial class TrainBookingWindow : Window
     private async Task RefreshSeatsAsync()
     {
         SeatsList.ItemsSource = null;
-
-        if (DeparturesGrid.SelectedItem
-                is not TrainDeparture departure
-            || WagonBox.SelectedItem is not int wagon)
+        if (DeparturesGrid.SelectedItem is not TrainDeparture departure || WagonBox.SelectedItem is not int wagon)
         {
             return;
         }
 
-        IReadOnlyList<int> seats =
-            await booking.AvailableSeatsAsync(
-                departure.TrainDepartureId,
-                wagon);
+        var check4 = await booking.AvailableSeatsAsync(departure.TrainDepartureId, wagon);
+        if (check4.IsFailure)
+        {
+            ShowValidationError(check4.Error, log: false);
+            return;
+        }
 
+        IReadOnlyList<int> seats = check4.Value!;
         SeatsList.ItemsSource = seats;
     }
 
     private async Task RefreshReservationsAsync()
     {
         ReservationsGrid.ItemsSource = null;
-
         if (BookingTripBox.SelectedItem is not Trip trip)
         {
             return;
         }
 
-        ReservationsGrid.ItemsSource =
-            await booking.ListAsync(trip.TripId);
+        var check5 = await booking.ListAsync(trip.TripId);
+        if (check5.IsFailure)
+        {
+            ShowValidationError(check5.Error, log: false);
+            return;
+        }
+
+        ReservationsGrid.ItemsSource = check5.Value!;
     }
 
     private async Task ReserveAsync()
     {
         if (BookingTripBox.SelectedItem is not Trip trip)
         {
-            throw new ArgumentException(
-                "Оберіть подорож. Якщо подорожей немає — спочатку створіть її.");
+            ShowValidationError("Оберіть подорож. Якщо подорожей немає — спочатку створіть її.", log: true);
+            return;
         }
 
-        if (DeparturesGrid.SelectedItem
-            is not TrainDeparture departure)
+        if (DeparturesGrid.SelectedItem is not TrainDeparture departure)
         {
-            throw new ArgumentException(
-                "Оберіть рейс у таблиці.");
+            ShowValidationError("Оберіть рейс у таблиці.", log: true);
+            return;
         }
 
         if (WagonBox.SelectedItem is not int wagon)
         {
-            throw new ArgumentException(
-                "Оберіть вагон.");
+            ShowValidationError("Оберіть вагон.", log: true);
+            return;
         }
 
         if (SeatsList.SelectedItem is not int seat)
         {
-            throw new ArgumentException(
-                "Натисніть на номер вільного місця.");
+            ShowValidationError("Натисніть на номер вільного місця.", log: true);
+            return;
         }
 
         BookingConfirmationText.Text = string.Empty;
+        var reservationResult = await booking.ReserveAsync(
+            trip.TripId,
+            departure.TrainDepartureId,
+            wagon,
+            seat,
+            PassengerNameBox.Text);
 
-        TrainReservation reservation;
-
-        try
-        {
-            reservation = await booking.ReserveAsync(
-                trip.TripId,
-                departure.TrainDepartureId,
-                wagon,
-                seat,
-                PassengerNameBox.Text);
-        }
-        catch (ArgumentException)
+        if (reservationResult.IsFailure)
         {
             await RefreshSeatsAsync();
-            throw;
+            ShowValidationError(reservationResult.Error);
+            return;
         }
 
-        string price = reservation.TotalPrice.ToString(
-            "N2",
-            CultureInfo.CurrentCulture);
+        TrainReservation reservation = reservationResult.Value!;
 
-        BookingConfirmationText.Text =
-            $"Бронювання збережено!\n"
-            + $"Код: {reservation.BookingCode}\n"
-            + $"Поїзд {departure.TrainNumber} · "
-            + $"вагон {wagon} · місце {seat}\n"
-            + $"Пасажир: {reservation.PassengerName}\n"
-            + $"Вартість: {price} ₴\n"
-            + "Це навчальне бронювання без оплати.";
-
+        string price = reservation.TotalPrice.ToString("N2", CultureInfo.CurrentCulture);
+        BookingConfirmationText.Text = $"Бронювання збережено!\n" + $"Код: {reservation.BookingCode}\n" + $"Поїзд {departure.TrainNumber} · " + $"вагон {wagon} · місце {seat}\n" + $"Пасажир: {reservation.PassengerName}\n" + $"Вартість: {price} ₴\n" + "Це навчальне бронювання без оплати.";
         await RefreshSeatsAsync();
         await RefreshReservationsAsync();
+    }
+
+    private void ShowValidationError(string message, bool log = false)
+    {
+        validationFailed = true;
+        BookingStatusText.Text = message;
+        if (log) logger.Information("TrainBookingWindow.ValidationFailed: " + message, session.CurrentUser?.UserId);
+        MessageBox.Show(this, message, "Перевірте введені дані", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }

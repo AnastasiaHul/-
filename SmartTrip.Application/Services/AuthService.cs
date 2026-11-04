@@ -1,5 +1,6 @@
 ﻿using System.Net.Mail;
 using System.Security.Cryptography;
+using SmartTrip.Application.Common;
 using SmartTrip.Application.Contracts;
 using SmartTrip.Domain.Entities;
 
@@ -10,110 +11,167 @@ public sealed class AuthService(
     UserSession session,
     ServiceOperations operations)
 {
-    public Task<User> RegisterAsync(
-        string email,
-        string password,
-        string name,
-        string role)
+    public Task<Result<User>> RegisterAsync(
+        string? email,
+        string? password,
+        string? name,
+        string? role)
     {
-        return operations.RunAsync("Register", async () =>
-        {
-            string normalized = NormalizeEmail(email);
-
-            if (password.Length < 10 || password.Length > 200)
+        return operations.RunResultAsync<User>(
+            "Register",
+            async () =>
             {
-                throw new ArgumentException(
-                    "Пароль повинен містити від 10 до 200 символів.");
-            }
+                Result<string> normalized = NormalizeEmail(email);
 
-            string firstName = ServiceOperations.Required(
-                name, "Ім’я", 100);
+                if (normalized.IsFailure)
+                {
+                    return Result<User>.Failure(normalized.Error);
+                }
 
-            if (role != "Tourist" && role != "Partner")
-            {
-                throw new ArgumentException("Невідома роль.");
-            }
+                if (password is null
+                    || password.Length < 10
+                    || password.Length > 200)
+                {
+                    return Result<User>.Failure(
+                        "Пароль повинен містити від 10 до 200 символів.");
+                }
 
-            IReadOnlyList<User> existing =
-                await users.ListAsync(
-                    x => x.Email == normalized)
-                .ConfigureAwait(false);
+                Result<string> firstName =
+                    ServiceOperations.TryRequired(
+                        name,
+                        "Ім’я",
+                        100);
 
-            if (existing.Count != 0)
-            {
-                throw new ArgumentException(
-                    "Цей email уже зареєстровано.");
-            }
+                if (firstName.IsFailure)
+                {
+                    return Result<User>.Failure(firstName.Error);
+                }
 
-            var user = new User
-            {
-                Email = normalized,
-                PasswordHash = Hash(password),
-                FirstName = firstName,
-                Role = role
-            };
+                if (role != "Tourist" && role != "Partner")
+                {
+                    return Result<User>.Failure(
+                        "Оберіть роль: турист або партнер.");
+                }
 
-            await users.AddAsync(user)
-                .ConfigureAwait(false);
+                string normalizedEmail = normalized.Value!;
 
-            session.SignIn(user);
+                IReadOnlyList<User> existing =
+                    await users.ListAsync(
+                        x => x.Email == normalizedEmail)
+                    .ConfigureAwait(false);
 
-            return user;
-        });
+                if (existing.Count != 0)
+                {
+                    return Result<User>.Failure(
+                        "Цей email уже зареєстровано.");
+                }
+
+                var user = new User
+                {
+                    Email = normalizedEmail,
+                    PasswordHash = Hash(password),
+                    FirstName = firstName.Value!,
+                    Role = role
+                };
+
+                await users.AddAsync(user)
+                    .ConfigureAwait(false);
+
+                session.SignIn(user);
+
+                return Result<User>.Success(user);
+            });
     }
 
-    public Task<User> LoginAsync(
-        string email,
-        string password)
+    public Task<Result<User>> LoginAsync(
+        string? email,
+        string? password)
     {
-        return operations.RunAsync("Login", async () =>
-        {
-            string normalized = NormalizeEmail(email);
-
-            User? user =
-                (await users.ListAsync(
-                    x => x.Email == normalized)
-                .ConfigureAwait(false))
-                .SingleOrDefault();
-
-            if (user is null
-                || !Verify(password, user.PasswordHash))
+        return operations.RunResultAsync<User>(
+            "Login",
+            async () =>
             {
-                throw new ArgumentException(
-                    "Неправильний email або пароль.");
-            }
+                Result<string> normalized = NormalizeEmail(email);
 
-            session.SignIn(user);
+                if (normalized.IsFailure)
+                {
+                    return Result<User>.Failure(normalized.Error);
+                }
 
-            return user;
-        });
+                if (string.IsNullOrEmpty(password)
+                    || password.Length > 200)
+                {
+                    return Result<User>.Failure(
+                        "Неправильний email або пароль.");
+                }
+
+                string normalizedEmail = normalized.Value!;
+
+                IReadOnlyList<User> found =
+                    await users.ListAsync(
+                        x => x.Email == normalizedEmail)
+                    .ConfigureAwait(false);
+
+                User? user = found.SingleOrDefault();
+
+                if (user is null
+                    || !Verify(password, user.PasswordHash))
+                {
+                    return Result<User>.Failure(
+                        "Неправильний email або пароль.");
+                }
+
+                session.SignIn(user);
+
+                return Result<User>.Success(user);
+            });
     }
 
-    public Task LogoutAsync()
+    public Task<Result> LogoutAsync()
     {
-        return operations.RunAsync("Logout", () =>
+        return operations.RunResultAsync(
+            "Logout",
+            () =>
+            {
+                Result<User> current = session.TryRequireUser();
+
+                if (current.IsFailure)
+                {
+                    return Task.FromResult(
+                        Result.Failure(current.Error));
+                }
+
+                session.SignOut();
+
+                return Task.FromResult(Result.Success());
+            });
+    }
+
+    private static Result<string> NormalizeEmail(string? email)
+    {
+        Result<string> required =
+            ServiceOperations.TryRequired(
+                email,
+                "Email",
+                254);
+
+        if (required.IsFailure)
         {
-            session.RequireUser();
-            session.SignOut();
+            return Result<string>.Failure(required.Error);
+        }
 
-            return Task.CompletedTask;
-        });
-    }
-
-    private static string NormalizeEmail(string email)
-    {
-        string normalized = ServiceOperations.Required(
-            email, "Email", 254).ToLowerInvariant();
+        string normalized = required.Value!.ToLowerInvariant();
 
         if (!MailAddress.TryCreate(
-                normalized, out MailAddress? address)
+                normalized,
+                out MailAddress? address)
             || address.Address != normalized)
         {
-            throw new ArgumentException(
+            return Result<string>.Failure(
                 "Введіть коректний email.");
         }
 
-        return normalized;
+        return Result<string>.Success(normalized);
     }
 
     private static string Hash(string password)
@@ -162,7 +220,8 @@ public sealed class AuthService(
                 32);
 
             return CryptographicOperations.FixedTimeEquals(
-                actual, expected);
+                actual,
+                expected);
         }
         catch (FormatException)
         {

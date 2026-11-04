@@ -71,9 +71,7 @@ public sealed class ExcursionReservationRepository(
 
         if (reservation.ParticipantsCount < 1)
         {
-            throw new ArgumentException(
-                "Кількість учасників має бути більшою за нуль.",
-                nameof(reservation));
+            return false;
         }
 
         await using ApplicationDbContext context =

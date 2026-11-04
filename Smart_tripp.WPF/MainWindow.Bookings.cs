@@ -62,6 +62,10 @@ public partial class MainWindow
 
         if (session.CurrentUser?.Role != "Tourist")
         {
+            logger.Information(
+                "OpenBookingCenter.ValidationFailed: Увійдіть як турист.",
+                session.CurrentUser?.UserId);
+
             MessageBox.Show(
                 this,
                 "Для бронювання увійдіть в акаунт туриста.",

@@ -1,4 +1,5 @@
-﻿using SmartTrip.Domain.Entities;
+﻿using SmartTrip.Application.Common;
+using SmartTrip.Domain.Entities;
 
 namespace SmartTrip.Application.Services;
 
@@ -16,23 +17,37 @@ public sealed class UserSession
         CurrentUser = null;
     }
 
-    public User RequireUser()
+    public Result<User> TryRequireUser()
     {
-        return CurrentUser
-            ?? throw new InvalidOperationException(
+        User? user = CurrentUser;
+
+        if (user is null)
+        {
+            return Result<User>.Failure(
                 "Спочатку увійдіть у систему.");
+        }
+
+        return Result<User>.Success(user);
     }
 
-    public User RequireRole(string role)
+    public Result<User> TryRequireRole(string role)
     {
-        User user = RequireUser();
+        Result<User> current = TryRequireUser();
+
+        if (current.IsFailure)
+        {
+            return current;
+        }
+
+        User user = current.Value!;
 
         if (user.Role != role)
         {
-            throw new UnauthorizedAccessException(
+            return Result<User>.Failure(
                 "Ця дія недоступна для вашої ролі.");
         }
 
-        return user;
+        return Result<User>.Success(user);
     }
+
 }

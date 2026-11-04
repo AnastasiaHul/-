@@ -1,4 +1,5 @@
-﻿using SmartTrip.Application.Contracts;
+﻿using SmartTrip.Application.Common;
+using SmartTrip.Application.Contracts;
 using SmartTrip.Domain.Entities;
 
 namespace SmartTrip.Application.Services;
@@ -8,80 +9,143 @@ public sealed class TripService(
     UserSession session,
     ServiceOperations operations)
 {
-    public Task<IReadOnlyList<Trip>> ListAsync()
+    public Task<Result<IReadOnlyList<Trip>>> ListAsync()
     {
-        return operations.RunAsync("ListTrips", () =>
-        {
-            int userId = session.RequireRole("Tourist").UserId;
+        return operations.RunResultAsync<IReadOnlyList<Trip>>(
+            "ListTrips",
+            async () =>
+            {
+                Result<User> access =
+                    session.TryRequireRole("Tourist");
 
-            return trips.ListAsync(x => x.UserId == userId);
-        });
+                if (access.IsFailure)
+                {
+                    return Result<IReadOnlyList<Trip>>.Failure(
+                        access.Error);
+                }
+
+                int userId = access.Value!.UserId;
+
+                IReadOnlyList<Trip> result =
+                    await trips.ListAsync(x => x.UserId == userId)
+                        .ConfigureAwait(false);
+
+                return Result<IReadOnlyList<Trip>>.Success(result);
+            });
     }
 
-    public Task<Trip> SaveAsync(
+    public Task<Result<Trip>> SaveAsync(
         int? id,
-        string title,
-        string city,
+        string? title,
+        string? city,
         DateTime start,
         DateTime end,
         decimal budget,
         int people,
-        string interests)
+        string? interests)
     {
-        return operations.RunAsync(
+        return operations.RunResultAsync<Trip>(
             id is null ? "CreateTrip" : "EditTrip",
             async () =>
             {
-                int userId =
-                    session.RequireRole("Tourist").UserId;
+                Result<User> access =
+                    session.TryRequireRole("Tourist");
 
-                string validTitle =
-                    ServiceOperations.Required(title, "Назва", 150);
+                if (access.IsFailure)
+                {
+                    return Result<Trip>.Failure(access.Error);
+                }
 
-                string validCity =
-                    ServiceOperations.Required(city, "Місто", 100);
+                Result<string> validTitle =
+                    ServiceOperations.TryRequired(
+                        title,
+                        "Назва",
+                        150);
+
+                if (validTitle.IsFailure)
+                {
+                    return Result<Trip>.Failure(validTitle.Error);
+                }
+
+                Result<string> validCity =
+                    ServiceOperations.TryRequired(
+                        city,
+                        "Місто",
+                        100);
+
+                if (validCity.IsFailure)
+                {
+                    return Result<Trip>.Failure(validCity.Error);
+                }
 
                 if (start == default
                     || end < start
                     || (end - start).TotalDays > 365)
                 {
-                    throw new ArgumentException(
+                    return Result<Trip>.Failure(
                         "Кінець подорожі не може бути раніше початку. "
                         + "Тривалість — максимум 365 днів.");
                 }
 
                 if (people < 1 || people > 1000)
                 {
-                    throw new ArgumentException(
+                    return Result<Trip>.Failure(
                         "Кількість людей: від 1 до 1000.");
                 }
 
-                if (interests.Length > 1000)
+                string interestsText = interests ?? string.Empty;
+
+                if (interestsText.Length > 1000)
                 {
-                    throw new ArgumentException(
+                    return Result<Trip>.Failure(
                         "Інтереси: максимум 1000 символів.");
                 }
 
-                decimal validBudget =
-                    ServiceOperations.Money(budget);
+                Result<decimal> validBudget =
+                    ServiceOperations.TryMoney(budget);
 
-                Trip trip = id is null
-                    ? new Trip { UserId = userId }
-                    : await OwnedAsync(id.Value)
-                        .ConfigureAwait(false);
+                if (validBudget.IsFailure)
+                {
+                    return Result<Trip>.Failure(validBudget.Error);
+                }
 
-                trip.Title = validTitle;
-                trip.City = validCity;
+                Trip trip;
+
+                if (id is null)
+                {
+                    trip = new Trip
+                    {
+                        UserId = access.Value!.UserId
+                    };
+                }
+                else
+                {
+                    Result<Trip> owned =
+                        await OwnedAsync(id.Value)
+                            .ConfigureAwait(false);
+
+                    if (owned.IsFailure)
+                    {
+                        return Result<Trip>.Failure(owned.Error);
+                    }
+
+                    trip = owned.Value!;
+                }
+
+                trip.Title = validTitle.Value!;
+                trip.City = validCity.Value!;
 
                 trip.StartDate = DateTime.SpecifyKind(
-                    start.Date, DateTimeKind.Utc);
+                    start.Date,
+                    DateTimeKind.Utc);
 
                 trip.EndDate = DateTime.SpecifyKind(
-                    end.Date, DateTimeKind.Utc);
+                    end.Date,
+                    DateTimeKind.Utc);
 
-                trip.Budget = validBudget;
+                trip.Budget = validBudget.Value;
                 trip.PeopleCount = people;
-                trip.Interests = interests.Trim();
+                trip.Interests = interestsText.Trim();
 
                 if (id is null)
                 {
@@ -94,37 +158,64 @@ public sealed class TripService(
                         .ConfigureAwait(false);
                 }
 
-                return trip;
+                return Result<Trip>.Success(trip);
             });
     }
 
-    public Task DeleteAsync(int id)
+    public Task<Result> DeleteAsync(int id)
     {
-        return operations.RunAsync("DeleteTrip", async () =>
-        {
-            Trip trip = await OwnedAsync(id)
-                .ConfigureAwait(false);
+        return operations.RunResultAsync(
+            "DeleteTrip",
+            async () =>
+            {
+                Result<Trip> owned =
+                    await OwnedAsync(id)
+                        .ConfigureAwait(false);
 
-            await trips.DeleteAsync(trip)
-                .ConfigureAwait(false);
-        });
+                if (owned.IsFailure)
+                {
+                    return Result.Failure(owned.Error);
+                }
+
+                await trips.DeleteAsync(owned.Value!)
+                    .ConfigureAwait(false);
+
+                return Result.Success();
+            });
     }
 
-    internal async Task<Trip> OwnedAsync(int id)
+    internal async Task<Result<Trip>> OwnedAsync(int id)
     {
-        int userId = session.RequireRole("Tourist").UserId;
+        Result<User> access =
+            session.TryRequireRole("Tourist");
 
-        Trip trip = await trips.FindAsync(id)
-            .ConfigureAwait(false)
-            ?? throw new ArgumentException(
-                "Подорож не знайдена.");
-
-        if (trip.UserId != userId)
+        if (access.IsFailure)
         {
-            throw new UnauthorizedAccessException(
+            return Result<Trip>.Failure(access.Error);
+        }
+
+        if (id <= 0)
+        {
+            return Result<Trip>.Failure(
+                "Некоректний ідентифікатор подорожі.");
+        }
+
+        Trip? trip = await trips.FindAsync(id)
+            .ConfigureAwait(false);
+
+        if (trip is null)
+        {
+            return Result<Trip>.Failure(
+                "Подорож не знайдена.");
+        }
+
+        if (trip.UserId != access.Value!.UserId)
+        {
+            return Result<Trip>.Failure(
                 "Ви можете керувати лише власними подорожами.");
         }
 
-        return trip;
+        return Result<Trip>.Success(trip);
     }
+
 }

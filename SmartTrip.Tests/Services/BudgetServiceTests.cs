@@ -10,7 +10,6 @@ using SmartTrip.Application.Services;
 using SmartTrip.Domain.Entities;
 
 namespace SmartTrip.Tests.Services;
-
 // Спільне налаштування: поточний користувач (Id = 1) і його подорож (Id = 1, 01.10–10.10.2024).
 public abstract class BudgetServiceTestBase
 {
@@ -22,7 +21,6 @@ public abstract class BudgetServiceTestBase
     protected readonly ServiceOperations operations;
     protected readonly TripService tripService;
     protected readonly BudgetService budgetService;
-
     protected BudgetServiceTestBase()
     {
         mockExpenses = new Mock<IRepository<Expense>>();
@@ -32,13 +30,13 @@ public abstract class BudgetServiceTestBase
         userSession = new UserSession();
         operations = new ServiceOperations(mockLogger.Object, userSession);
         tripService = new TripService(mockTrips.Object, userSession, operations);
-        budgetService = new BudgetService(
-            mockExpenses.Object,
-            mockPlaces.Object,
-            tripService,
-            operations);
-
-        var currentUser = new User { UserId = 1, FirstName = "Tourist", Role = "Tourist" };
+        budgetService = new BudgetService(mockExpenses.Object, mockPlaces.Object, tripService, operations);
+        var currentUser = new User
+        {
+            UserId = 1,
+            FirstName = "Tourist",
+            Role = "Tourist"
+        };
         userSession.SignIn(currentUser);
     }
 
@@ -55,26 +53,26 @@ public abstract class BudgetServiceTestBase
             Budget = budget,
             PeopleCount = people
         };
-
         mockTrips.Setup(x => x.FindAsync(1)).ReturnsAsync(trip);
         return trip;
     }
 
     protected void SetupOtherUserTrip()
     {
-        var trip = new Trip { TripId = 1, UserId = 999, Title = "Other Trip" };
+        var trip = new Trip
+        {
+            TripId = 1,
+            UserId = 999,
+            Title = "Other Trip"
+        };
         mockTrips.Setup(x => x.FindAsync(1)).ReturnsAsync(trip);
     }
 
     // Мок застосовує реальний предикат сервісу до бази витрат.
     protected void SetupExpenses(List<Expense> all)
     {
-        mockExpenses
-            .Setup(x => x.ListAsync(It.IsAny<Expression<Func<Expense, bool>>>()))
-            .ReturnsAsync((Expression<Func<Expense, bool>> predicate) =>
-                all.Where(predicate.Compile()).ToList());
+        mockExpenses.Setup(x => x.ListAsync(It.IsAny<Expression<Func<Expense, bool>>>())).ReturnsAsync((Expression<Func<Expense, bool>> predicate) => all.Where(predicate.Compile()).ToList());
     }
-
 }
 
 public class BudgetServiceAddExpenseTests : BudgetServiceTestBase
@@ -83,16 +81,10 @@ public class BudgetServiceAddExpenseTests : BudgetServiceTestBase
     public async Task AddExpense_WithValidData_SavesExpense()
     {
         SetupOwnTrip();
-
         Expense? saved = null;
-        mockExpenses
-            .Setup(x => x.AddAsync(It.IsAny<Expense>()))
-            .Callback<Expense>(e => saved = e)
-            .Returns(Task.CompletedTask);
-
-        await budgetService.AddExpenseAsync(
-            1, "Food", "Dinner", 120, new DateTime(2024, 10, 3));
-
+        mockExpenses.Setup(x => x.AddAsync(It.IsAny<Expense>())).Callback<Expense>(e => saved = e).Returns(Task.CompletedTask);
+        var outcome1 = await budgetService.AddExpenseAsync(1, "Food", "Dinner", 120, new DateTime(2024, 10, 3));
+        Assert.True(outcome1.IsSuccess, outcome1.Error);
         Assert.NotNull(saved);
         Assert.Equal(1, saved!.TripId);
         Assert.Equal("Food", saved.Category);
@@ -100,7 +92,6 @@ public class BudgetServiceAddExpenseTests : BudgetServiceTestBase
         Assert.Equal(120, saved.Amount);
         Assert.Equal(new DateTime(2024, 10, 3), saved.Date.Date);
         Assert.Equal(DateTimeKind.Utc, saved.Date.Kind);
-
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Once);
     }
 
@@ -108,13 +99,9 @@ public class BudgetServiceAddExpenseTests : BudgetServiceTestBase
     public async Task AddExpense_OnFirstDayOfTrip_Succeeds()
     {
         SetupOwnTrip();
-        mockExpenses
-            .Setup(x => x.AddAsync(It.IsAny<Expense>()))
-            .Returns(Task.CompletedTask);
-
-        await budgetService.AddExpenseAsync(
-            1, "Food", "Breakfast", 20, new DateTime(2024, 10, 1));
-
+        mockExpenses.Setup(x => x.AddAsync(It.IsAny<Expense>())).Returns(Task.CompletedTask);
+        var outcome2 = await budgetService.AddExpenseAsync(1, "Food", "Breakfast", 20, new DateTime(2024, 10, 1));
+        Assert.True(outcome2.IsSuccess, outcome2.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Once);
     }
 
@@ -122,111 +109,80 @@ public class BudgetServiceAddExpenseTests : BudgetServiceTestBase
     public async Task AddExpense_OnLastDayOfTrip_Succeeds()
     {
         SetupOwnTrip();
-        mockExpenses
-            .Setup(x => x.AddAsync(It.IsAny<Expense>()))
-            .Returns(Task.CompletedTask);
-
-        await budgetService.AddExpenseAsync(
-            1, "Food", "Farewell dinner", 80, new DateTime(2024, 10, 10));
-
+        mockExpenses.Setup(x => x.AddAsync(It.IsAny<Expense>())).Returns(Task.CompletedTask);
+        var outcome3 = await budgetService.AddExpenseAsync(1, "Food", "Farewell dinner", 80, new DateTime(2024, 10, 10));
+        Assert.True(outcome3.IsSuccess, outcome3.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Once);
     }
 
     [Fact]
-    public async Task AddExpense_WithEmptyCategory_ThrowsException()
+    public async Task AddExpense_WithEmptyCategory_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                1, "", "Dinner", 120, new DateTime(2024, 10, 3)));
-
-        Assert.Contains("Категорія", exception.Message);
-
+        var exception = await budgetService.AddExpenseAsync(1, "", "Dinner", 120, new DateTime(2024, 10, 3));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("Категорія", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddExpense_WithEmptyDescription_ThrowsException()
+    public async Task AddExpense_WithEmptyDescription_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                1, "Food", "", 120, new DateTime(2024, 10, 3)));
-
-        Assert.Contains("Опис витрати", exception.Message);
-
+        var exception = await budgetService.AddExpenseAsync(1, "Food", "", 120, new DateTime(2024, 10, 3));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("Опис витрати", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(-50)]
-    public async Task AddExpense_WithNonPositiveAmount_ThrowsException(int amount)
+    public async Task AddExpense_WithNonPositiveAmount_ReturnsFailure(int amount)
     {
         SetupOwnTrip();
-
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                1, "Food", "Dinner", amount, new DateTime(2024, 10, 3)));
-
+        var failure4 = await budgetService.AddExpenseAsync(1, "Food", "Dinner", amount, new DateTime(2024, 10, 3));
+        Assert.True(failure4.IsFailure, failure4.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddExpense_WithDateBeforeTripStart_ThrowsException()
+    public async Task AddExpense_WithDateBeforeTripStart_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                1, "Food", "Dinner", 120, new DateTime(2024, 9, 30)));
-
-        Assert.Contains("в межах подорожі", exception.Message);
-
+        var exception = await budgetService.AddExpenseAsync(1, "Food", "Dinner", 120, new DateTime(2024, 9, 30));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("в межах подорожі", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddExpense_WithDateAfterTripEnd_ThrowsException()
+    public async Task AddExpense_WithDateAfterTripEnd_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                1, "Food", "Dinner", 120, new DateTime(2024, 10, 11)));
-
-        Assert.Contains("в межах подорожі", exception.Message);
-
+        var exception = await budgetService.AddExpenseAsync(1, "Food", "Dinner", 120, new DateTime(2024, 10, 11));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("в межах подорожі", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddExpense_ToOtherUserTrip_ThrowsException()
+    public async Task AddExpense_ToOtherUserTrip_ReturnsFailure()
     {
         SetupOtherUserTrip();
-
-        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => budgetService.AddExpenseAsync(
-                1, "Food", "Dinner", 120, new DateTime(2024, 10, 3)));
-
-        Assert.Contains("власними подорожами", exception.Message);
-
+        var exception = await budgetService.AddExpenseAsync(1, "Food", "Dinner", 120, new DateTime(2024, 10, 3));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("власними подорожами", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddExpense_ToNonexistentTrip_ThrowsException()
+    public async Task AddExpense_ToNonexistentTrip_ReturnsFailure()
     {
-        mockTrips.Setup(x => x.FindAsync(999)).ReturnsAsync((Trip?)null);
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddExpenseAsync(
-                999, "Food", "Dinner", 120, new DateTime(2024, 10, 3)));
-
-        Assert.Contains("Подорож не знайдена", exception.Message);
-
+        mockTrips.Setup(x => x.FindAsync(999)).ReturnsAsync((Trip? )null);
+        var exception = await budgetService.AddExpenseAsync(999, "Food", "Dinner", 120, new DateTime(2024, 10, 3));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("Подорож не знайдена", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 }
@@ -237,131 +193,70 @@ public class BudgetServiceAddPlaceExpenseTests : BudgetServiceTestBase
     public async Task AddPlaceExpense_WithPaidPlace_SavesExpenseWithPlacePrice()
     {
         SetupOwnTrip();
-
-        mockPlaces
-            .Setup(x => x.FindAsync(5))
-            .ReturnsAsync(new Place
-            {
-                PlaceId = 5,
-                Name = "Louvre",
-                Category = "Museum",
-                Price = 150,
-                Status = "Active"
-            });
-
+        mockPlaces.Setup(x => x.FindAsync(5)).ReturnsAsync(new Place { PlaceId = 5, Name = "Louvre", Category = "Museum", Price = 150, Status = "Active" });
         Expense? saved = null;
-        mockExpenses
-            .Setup(x => x.AddAsync(It.IsAny<Expense>()))
-            .Callback<Expense>(e => saved = e)
-            .Returns(Task.CompletedTask);
-
-        await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4));
-
+        mockExpenses.Setup(x => x.AddAsync(It.IsAny<Expense>())).Callback<Expense>(e => saved = e).Returns(Task.CompletedTask);
+        var outcome5 = await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4));
+        Assert.True(outcome5.IsSuccess, outcome5.Error);
         Assert.NotNull(saved);
         Assert.Equal(150, saved!.Amount);
         Assert.Equal("Museum", saved.Category);
         Assert.Equal("Відвідування: Louvre", saved.Description);
         Assert.Equal(1, saved.TripId);
-
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Once);
     }
 
     [Fact]
-    public async Task AddPlaceExpense_WithNonexistentPlace_ThrowsException()
+    public async Task AddPlaceExpense_WithNonexistentPlace_ReturnsFailure()
     {
         SetupOwnTrip();
-        mockPlaces.Setup(x => x.FindAsync(404)).ReturnsAsync((Place?)null);
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddPlaceExpenseAsync(1, 404, new DateTime(2024, 10, 4)));
-
-        Assert.Contains("Місце не знайдено", exception.Message);
-
+        mockPlaces.Setup(x => x.FindAsync(404)).ReturnsAsync((Place? )null);
+        var exception = await budgetService.AddPlaceExpenseAsync(1, 404, new DateTime(2024, 10, 4));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("Місце не знайдено", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddPlaceExpense_WithHiddenPlace_ThrowsException()
+    public async Task AddPlaceExpense_WithHiddenPlace_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        mockPlaces
-            .Setup(x => x.FindAsync(5))
-            .ReturnsAsync(new Place
-            {
-                PlaceId = 5,
-                Name = "Closed Place",
-                Category = "Museum",
-                Price = 100,
-                Status = "Hidden"
-            });
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4)));
-
-        Assert.Contains("недоступне", exception.Message);
-
+        mockPlaces.Setup(x => x.FindAsync(5)).ReturnsAsync(new Place { PlaceId = 5, Name = "Closed Place", Category = "Museum", Price = 100, Status = "Hidden" });
+        var exception = await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("недоступне", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddPlaceExpense_WithFreePlace_ThrowsException()
+    public async Task AddPlaceExpense_WithFreePlace_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        mockPlaces
-            .Setup(x => x.FindAsync(5))
-            .ReturnsAsync(new Place
-            {
-                PlaceId = 5,
-                Name = "City Park",
-                Category = "Park",
-                Price = 0,
-                Status = "Active"
-            });
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4)));
-
-        Assert.Contains("безкоштовне", exception.Message);
-
+        mockPlaces.Setup(x => x.FindAsync(5)).ReturnsAsync(new Place { PlaceId = 5, Name = "City Park", Category = "Park", Price = 0, Status = "Active" });
+        var exception = await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("безкоштовне", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddPlaceExpense_WithDateOutsideTrip_ThrowsException()
+    public async Task AddPlaceExpense_WithDateOutsideTrip_ReturnsFailure()
     {
         SetupOwnTrip();
-
-        mockPlaces
-            .Setup(x => x.FindAsync(5))
-            .ReturnsAsync(new Place
-            {
-                PlaceId = 5,
-                Name = "Louvre",
-                Category = "Museum",
-                Price = 150,
-                Status = "Active"
-            });
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(
-            () => budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 11, 1)));
-
-        Assert.Contains("в межах подорожі", exception.Message);
-
+        mockPlaces.Setup(x => x.FindAsync(5)).ReturnsAsync(new Place { PlaceId = 5, Name = "Louvre", Category = "Museum", Price = 150, Status = "Active" });
+        var exception = await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 11, 1));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("в межах подорожі", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 
     [Fact]
-    public async Task AddPlaceExpense_ToOtherUserTrip_ThrowsException()
+    public async Task AddPlaceExpense_ToOtherUserTrip_ReturnsFailure()
     {
         SetupOtherUserTrip();
-
-        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4)));
-
-        Assert.Contains("власними подорожами", exception.Message);
-
+        var exception = await budgetService.AddPlaceExpenseAsync(1, 5, new DateTime(2024, 10, 4));
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("власними подорожами", exception.Error);
         mockExpenses.Verify(x => x.AddAsync(It.IsAny<Expense>()), Times.Never);
     }
 }
@@ -372,14 +267,10 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     public async Task Calculate_WithExpenses_ReturnsCorrectSummary()
     {
         SetupOwnTrip(budget: 5000, people: 4);
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 1000 },
-            new Expense { TripId = 1, Category = "Museum", Amount = 500 }
-        });
-
-        var result = await budgetService.CalculateAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 1000 }, new Expense { TripId = 1, Category = "Museum", Amount = 500 } });
+        var outcome6 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome6.IsSuccess, outcome6.Error);
+        var result = outcome6.Value!;
         Assert.Equal(5000, result.Planned);
         Assert.Equal(1500, result.Spent);
         Assert.Equal(3500, result.Remaining);
@@ -391,9 +282,9 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     {
         SetupOwnTrip(budget: 5000, people: 4);
         SetupExpenses(new List<Expense>());
-
-        var result = await budgetService.CalculateAsync(1);
-
+        var outcome7 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome7.IsSuccess, outcome7.Error);
+        var result = outcome7.Value!;
         Assert.Equal(0, result.Spent);
         Assert.Equal(5000, result.Remaining);
         Assert.Equal(0, result.PerPerson);
@@ -403,13 +294,10 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     public async Task Calculate_WhenOverBudget_ReturnsNegativeRemaining()
     {
         SetupOwnTrip(budget: 5000, people: 4);
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Hotel", Amount = 6000 }
-        });
-
-        var result = await budgetService.CalculateAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Hotel", Amount = 6000 } });
+        var outcome8 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome8.IsSuccess, outcome8.Error);
+        var result = outcome8.Value!;
         Assert.Equal(-1000, result.Remaining);
     }
 
@@ -417,13 +305,10 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     public async Task Calculate_RoundsPerPersonToTwoDecimals()
     {
         SetupOwnTrip(budget: 5000, people: 3);
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 }
-        });
-
-        var result = await budgetService.CalculateAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 } });
+        var outcome9 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome9.IsSuccess, outcome9.Error);
+        var result = outcome9.Value!;
         Assert.Equal(33.33m, result.PerPerson);
     }
 
@@ -431,13 +316,10 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     public async Task Calculate_WithZeroPeople_ReturnsZeroPerPerson()
     {
         SetupOwnTrip(budget: 5000, people: 0);
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 }
-        });
-
-        var result = await budgetService.CalculateAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 } });
+        var outcome10 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome10.IsSuccess, outcome10.Error);
+        var result = outcome10.Value!;
         Assert.Equal(0, result.PerPerson);
     }
 
@@ -445,26 +327,20 @@ public class BudgetServiceCalculateTests : BudgetServiceTestBase
     public async Task Calculate_CountsOnlyExpensesOfThisTrip()
     {
         SetupOwnTrip(budget: 5000, people: 4);
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 200 },
-            new Expense { TripId = 2, Category = "Food", Amount = 9999 }
-        });
-
-        var result = await budgetService.CalculateAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 200 }, new Expense { TripId = 2, Category = "Food", Amount = 9999 } });
+        var outcome11 = await budgetService.CalculateAsync(1);
+        Assert.True(outcome11.IsSuccess, outcome11.Error);
+        var result = outcome11.Value!;
         Assert.Equal(200, result.Spent);
     }
 
     [Fact]
-    public async Task Calculate_ForOtherUserTrip_ThrowsException()
+    public async Task Calculate_ForOtherUserTrip_ReturnsFailure()
     {
         SetupOtherUserTrip();
-
-        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => budgetService.CalculateAsync(1));
-
-        Assert.Contains("власними подорожами", exception.Message);
+        var exception = await budgetService.CalculateAsync(1);
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("власними подорожами", exception.Error);
     }
 }
 
@@ -474,15 +350,10 @@ public class BudgetServiceListExpensesTests : BudgetServiceTestBase
     public async Task ListExpenses_ReturnsOnlyExpensesOfThisTrip()
     {
         SetupOwnTrip();
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Description = "Dinner", Amount = 100 },
-            new Expense { TripId = 2, Description = "Other trip expense", Amount = 50 },
-            new Expense { TripId = 1, Description = "Museum", Amount = 30 }
-        });
-
-        var result = await budgetService.ListAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Description = "Dinner", Amount = 100 }, new Expense { TripId = 2, Description = "Other trip expense", Amount = 50 }, new Expense { TripId = 1, Description = "Museum", Amount = 30 } });
+        var outcome12 = await budgetService.ListAsync(1);
+        Assert.True(outcome12.IsSuccess, outcome12.Error);
+        var result = outcome12.Value!;
         Assert.Equal(2, result.Count);
         Assert.All(result, e => Assert.Equal(1, e.TripId));
         Assert.DoesNotContain(result, e => e.Description == "Other trip expense");
@@ -493,25 +364,20 @@ public class BudgetServiceListExpensesTests : BudgetServiceTestBase
     {
         SetupOwnTrip();
         SetupExpenses(new List<Expense>());
-
-        var result = await budgetService.ListAsync(1);
-
+        var outcome13 = await budgetService.ListAsync(1);
+        Assert.True(outcome13.IsSuccess, outcome13.Error);
+        var result = outcome13.Value!;
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task ListExpenses_ForOtherUserTrip_ThrowsException()
+    public async Task ListExpenses_ForOtherUserTrip_ReturnsFailure()
     {
         SetupOtherUserTrip();
-
-        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => budgetService.ListAsync(1));
-
-        Assert.Contains("власними подорожами", exception.Message);
-
-        mockExpenses.Verify(
-            x => x.ListAsync(It.IsAny<Expression<Func<Expense, bool>>>()),
-            Times.Never);
+        var exception = await budgetService.ListAsync(1);
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("власними подорожами", exception.Error);
+        mockExpenses.Verify(x => x.ListAsync(It.IsAny<Expression<Func<Expense, bool>>>()), Times.Never);
     }
 }
 
@@ -521,15 +387,10 @@ public class BudgetServiceStatisticsTests : BudgetServiceTestBase
     public async Task Statistics_GroupsExpensesByCategory()
     {
         SetupOwnTrip();
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 },
-            new Expense { TripId = 1, Category = "Food", Amount = 60 },
-            new Expense { TripId = 1, Category = "Museum", Amount = 300 }
-        });
-
-        var result = await budgetService.StatisticsAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 }, new Expense { TripId = 1, Category = "Food", Amount = 60 }, new Expense { TripId = 1, Category = "Museum", Amount = 300 } });
+        var outcome14 = await budgetService.StatisticsAsync(1);
+        Assert.True(outcome14.IsSuccess, outcome14.Error);
+        var result = outcome14.Value!;
         Assert.Equal(2, result.Count);
         Assert.Equal(160, result.Single(x => x.Category == "Food").Total);
         Assert.Equal(300, result.Single(x => x.Category == "Museum").Total);
@@ -539,14 +400,10 @@ public class BudgetServiceStatisticsTests : BudgetServiceTestBase
     public async Task Statistics_MergesCategoriesIgnoringCase()
     {
         SetupOwnTrip();
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 },
-            new Expense { TripId = 1, Category = "food", Amount = 50 }
-        });
-
-        var result = await budgetService.StatisticsAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 }, new Expense { TripId = 1, Category = "food", Amount = 50 } });
+        var outcome15 = await budgetService.StatisticsAsync(1);
+        Assert.True(outcome15.IsSuccess, outcome15.Error);
+        var result = outcome15.Value!;
         Assert.Single(result);
         Assert.Equal(150, result[0].Total);
     }
@@ -555,32 +412,21 @@ public class BudgetServiceStatisticsTests : BudgetServiceTestBase
     public async Task Statistics_SortsCategoriesByTotalDescending()
     {
         SetupOwnTrip();
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 },
-            new Expense { TripId = 1, Category = "Museum", Amount = 300 },
-            new Expense { TripId = 1, Category = "Transport", Amount = 200 }
-        });
-
-        var result = await budgetService.StatisticsAsync(1);
-
-        Assert.Equal(
-            new[] { "Museum", "Transport", "Food" },
-            result.Select(x => x.Category).ToArray());
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 }, new Expense { TripId = 1, Category = "Museum", Amount = 300 }, new Expense { TripId = 1, Category = "Transport", Amount = 200 } });
+        var outcome16 = await budgetService.StatisticsAsync(1);
+        Assert.True(outcome16.IsSuccess, outcome16.Error);
+        var result = outcome16.Value!;
+        Assert.Equal(new[] { "Museum", "Transport", "Food" }, result.Select(x => x.Category).ToArray());
     }
 
     [Fact]
     public async Task Statistics_CountsOnlyExpensesOfThisTrip()
     {
         SetupOwnTrip();
-        SetupExpenses(new List<Expense>
-        {
-            new Expense { TripId = 1, Category = "Food", Amount = 100 },
-            new Expense { TripId = 2, Category = "Food", Amount = 9999 }
-        });
-
-        var result = await budgetService.StatisticsAsync(1);
-
+        SetupExpenses(new List<Expense> { new Expense { TripId = 1, Category = "Food", Amount = 100 }, new Expense { TripId = 2, Category = "Food", Amount = 9999 } });
+        var outcome17 = await budgetService.StatisticsAsync(1);
+        Assert.True(outcome17.IsSuccess, outcome17.Error);
+        var result = outcome17.Value!;
         Assert.Single(result);
         Assert.Equal(100, result[0].Total);
     }
@@ -590,20 +436,18 @@ public class BudgetServiceStatisticsTests : BudgetServiceTestBase
     {
         SetupOwnTrip();
         SetupExpenses(new List<Expense>());
-
-        var result = await budgetService.StatisticsAsync(1);
-
+        var outcome18 = await budgetService.StatisticsAsync(1);
+        Assert.True(outcome18.IsSuccess, outcome18.Error);
+        var result = outcome18.Value!;
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task Statistics_ForOtherUserTrip_ThrowsException()
+    public async Task Statistics_ForOtherUserTrip_ReturnsFailure()
     {
         SetupOtherUserTrip();
-
-        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => budgetService.StatisticsAsync(1));
-
-        Assert.Contains("власними подорожами", exception.Message);
+        var exception = await budgetService.StatisticsAsync(1);
+        Assert.True(exception.IsFailure, exception.Error);
+        Assert.Contains("власними подорожами", exception.Error);
     }
 }
