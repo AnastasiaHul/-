@@ -85,7 +85,7 @@ public static class CarDatabaseInitializer
             .ConfigureAwait(false);
     }
 
-    private static async Task SeedCarsAsync(
+    public static async Task SeedCarsAsync(
         ApplicationDbContext context)
     {
         var saved = await context.RentalCars

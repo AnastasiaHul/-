@@ -82,7 +82,7 @@ public static class ExcursionDatabaseInitializer
             .ConfigureAwait(false);
     }
 
-    private static async Task SeedExcursionsAsync(
+    public static async Task SeedExcursionsAsync(
         ApplicationDbContext context)
     {
         DateTime firstDay = DateTime.SpecifyKind(

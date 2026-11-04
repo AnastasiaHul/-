@@ -83,7 +83,7 @@ public static class TrainDatabaseInitializer
             .ConfigureAwait(false);
     }
 
-    private static async Task SeedDeparturesAsync(
+    public static async Task SeedDeparturesAsync(
         ApplicationDbContext context)
     {
         DateTime firstDay = DateTime.SpecifyKind(

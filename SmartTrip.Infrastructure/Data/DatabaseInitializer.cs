@@ -74,6 +74,22 @@ public static class DatabaseInitializer
         {
             await context.Database.MigrateAsync()
                 .ConfigureAwait(false);
+
+            await TrainDatabaseInitializer
+                .SeedDeparturesAsync(context)
+                .ConfigureAwait(false);
+
+            await AccommodationDatabaseInitializer
+                .SeedAccommodationsAsync(context)
+                .ConfigureAwait(false);
+
+            await CarDatabaseInitializer
+                .SeedCarsAsync(context)
+                .ConfigureAwait(false);
+
+            await ExcursionDatabaseInitializer
+                .SeedExcursionsAsync(context)
+                .ConfigureAwait(false);
         }
     }
 }
