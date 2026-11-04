@@ -22,6 +22,286 @@ namespace SmartTrip.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.Accommodation", b =>
+                {
+                    b.Property<int>("AccommodationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccommodationId"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxGuests")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("PricePerNight")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("AccommodationId");
+
+                    b.HasIndex("City", "IsActive");
+
+                    b.ToTable("Accommodations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Accommodation_MaxGuests", "\"MaxGuests\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.AccommodationReservation", b =>
+                {
+                    b.Property<int>("AccommodationReservationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccommodationReservationId"));
+
+                    b.Property<int>("AccommodationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BookingCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CheckIn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CheckOut")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GuestName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("GuestsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("AccommodationReservationId");
+
+                    b.HasIndex("BookingCode")
+                        .IsUnique();
+
+                    b.HasIndex("TripId");
+
+                    b.HasIndex("AccommodationId", "Status", "CheckIn", "CheckOut");
+
+                    b.ToTable("AccommodationReservations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AccommodationReservation_Dates", "\"CheckOut\" > \"CheckIn\"");
+
+                            t.HasCheckConstraint("CK_AccommodationReservation_Guests", "\"GuestsCount\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.CarReservation", b =>
+                {
+                    b.Property<int>("CarReservationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CarReservationId"));
+
+                    b.Property<string>("BookingCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DriverAge")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DriverName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("PickupDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RentalCarId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CarReservationId");
+
+                    b.HasIndex("BookingCode")
+                        .IsUnique();
+
+                    b.HasIndex("TripId");
+
+                    b.HasIndex("RentalCarId", "Status", "PickupDate", "ReturnDate");
+
+                    b.ToTable("CarReservations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CarReservation_Dates", "\"ReturnDate\" > \"PickupDate\"");
+
+                            t.HasCheckConstraint("CK_CarReservation_DriverAge", "\"DriverAge\" >= 21 AND \"DriverAge\" <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.ExcursionReservation", b =>
+                {
+                    b.Property<int>("ExcursionReservationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExcursionReservationId"));
+
+                    b.Property<string>("BookingCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExcursionSessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GuestName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ParticipantsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ExcursionReservationId");
+
+                    b.HasIndex("BookingCode")
+                        .IsUnique();
+
+                    b.HasIndex("TripId");
+
+                    b.HasIndex("ExcursionSessionId", "Status");
+
+                    b.ToTable("ExcursionReservations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExcursionReservation_Participants", "\"ParticipantsCount\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.ExcursionSession", b =>
+                {
+                    b.Property<int>("ExcursionSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExcursionSessionId"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MeetingAddress")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<decimal>("PricePerPerson")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("ExcursionSessionId");
+
+                    b.HasIndex("City", "StartsAt", "IsActive");
+
+                    b.ToTable("ExcursionSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExcursionSession_Settings", "\"Capacity\" > 0 AND \"DurationMinutes\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.Expense", b =>
                 {
                     b.Property<int>("ExpenseId")
@@ -77,6 +357,41 @@ namespace SmartTrip.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Favorites");
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.ItineraryVisit", b =>
+                {
+                    b.Property<int>("ItineraryVisitId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ItineraryVisitId"));
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PlaceName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("VisitAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ItineraryVisitId");
+
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("TripId", "VisitAt")
+                        .IsUnique();
+
+                    b.ToTable("ItineraryVisits");
                 });
 
             modelBuilder.Entity("SmartTrip.Domain.Entities.PackingItem", b =>
@@ -145,6 +460,59 @@ namespace SmartTrip.Infrastructure.Migrations
                     b.ToTable("Places");
                 });
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.RentalCar", b =>
+                {
+                    b.Property<int>("RentalCarId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RentalCarId"));
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PickupAddress")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<decimal>("PricePerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("SeatsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Transmission")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("RentalCarId");
+
+                    b.HasIndex("City", "IsActive");
+
+                    b.ToTable("RentalCars", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RentalCar_Seats", "\"SeatsCount\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.Review", b =>
                 {
                     b.Property<int>("ReviewId")
@@ -177,6 +545,115 @@ namespace SmartTrip.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.TrainDeparture", b =>
+                {
+                    b.Property<int>("TrainDepartureId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TrainDepartureId"));
+
+                    b.Property<DateTime>("ArrivalAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ArrivalCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("DepartureAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DepartureCity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SeatsPerWagon")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TicketPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("TrainNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("WagonCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TrainDepartureId");
+
+                    b.HasIndex("DepartureCity", "ArrivalCity", "DepartureAt");
+
+                    b.ToTable("TrainDepartures", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TrainDeparture_Capacity", "\"WagonCount\" > 0 AND \"SeatsPerWagon\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.TrainReservation", b =>
+                {
+                    b.Property<int>("TrainReservationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TrainReservationId"));
+
+                    b.Property<string>("BookingCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PassengerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SeatNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TrainDepartureId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WagonNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TrainReservationId");
+
+                    b.HasIndex("BookingCode")
+                        .IsUnique();
+
+                    b.HasIndex("TripId");
+
+                    b.HasIndex("TrainDepartureId", "WagonNumber", "SeatNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TrainReservation_Seat")
+                        .HasFilter("\"Status\" = 'Confirmed'");
+
+                    b.ToTable("TrainReservations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TrainReservation_SeatNumbers", "\"WagonNumber\" > 0 AND \"SeatNumber\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("SmartTrip.Domain.Entities.Trip", b =>
@@ -260,6 +737,51 @@ namespace SmartTrip.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.AccommodationReservation", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.Accommodation", null)
+                        .WithMany()
+                        .HasForeignKey("AccommodationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.CarReservation", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.RentalCar", null)
+                        .WithMany()
+                        .HasForeignKey("RentalCarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.ExcursionReservation", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.ExcursionSession", null)
+                        .WithMany()
+                        .HasForeignKey("ExcursionSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.Expense", b =>
                 {
                     b.HasOne("SmartTrip.Domain.Entities.Trip", null)
@@ -284,6 +806,21 @@ namespace SmartTrip.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.ItineraryVisit", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.Place", null)
+                        .WithMany()
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.PackingItem", b =>
                 {
                     b.HasOne("SmartTrip.Domain.Entities.Trip", null)
@@ -304,6 +841,21 @@ namespace SmartTrip.Infrastructure.Migrations
                     b.HasOne("SmartTrip.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.TrainReservation", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.TrainDeparture", null)
+                        .WithMany()
+                        .HasForeignKey("TrainDepartureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

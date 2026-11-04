@@ -85,7 +85,7 @@ public static class AccommodationDatabaseInitializer
             .ConfigureAwait(false);
     }
 
-    private static async Task SeedAccommodationsAsync(
+    public static async Task SeedAccommodationsAsync(
         ApplicationDbContext context)
     {
         var saved = await context.Accommodations
