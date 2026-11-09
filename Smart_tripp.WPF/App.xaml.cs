@@ -92,9 +92,13 @@ public partial class App : System.Windows.Application
 
             scope = provider.CreateScope();
 
-            await DatabaseInitializer.InitializeAsync(
-                scope.ServiceProvider.GetRequiredService<
-                    IDbContextFactory<ApplicationDbContext>>());
+            var factory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+            await DatabaseInitializer.InitializeAsync(factory);
+            if (databaseProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+            {
+                await PhotoDatabaseInitializer.InitializeSqliteAsync(factory);
+            }
 
             MainWindow window =
                 scope.ServiceProvider

@@ -27,6 +27,9 @@ public static class DependencyInjection
 
         services.AddScoped<AuthService>();
         services.AddScoped<TripService>();
+        services.AddScoped<TravelerMapService>();
+        services.AddScoped<BookingReadinessService>();
+        services.AddScoped<IRepository<TripPhoto>, EfRepository<TripPhoto>>();
         services.AddScoped<PlaceService>();
         services.AddScoped<CatalogService>();
         services.AddScoped<BudgetService>();

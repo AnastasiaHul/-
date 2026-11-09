@@ -127,6 +127,9 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <UniformGrid Columns="2">
+                <Button x:Name="ReadinessButton"
+                        Content="Перевірити готовність подорожі"
+                        Margin="8" Padding="12"/>
                 <Button x:Name="OpenTrainsButton"
                         Style="{StaticResource BookingCardButton}">
                     <StackPanel>

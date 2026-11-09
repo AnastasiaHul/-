@@ -13,11 +13,18 @@ public partial class BookingCenterWindow : Window
         ExcursionBookingService excursions,
         TripService trips,
         UserSession session,
-        IAppLogger logger)
+        IAppLogger logger,
+        BookingReadinessService readiness)
     {
         InitializeComponent();
 
         BackButton.Click += (_, _) => Close();
+
+        ReadinessButton.Click += (_, _) =>
+            new BookingReadinessWindow(readiness, trips, session, logger)
+            {
+                Owner = this
+            }.ShowDialog();
 
         OpenTrainsButton.Click += (_, _) =>
         {

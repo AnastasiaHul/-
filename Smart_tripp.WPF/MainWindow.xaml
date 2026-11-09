@@ -49,6 +49,10 @@
                             Click="OnOpenTrainBooking"
                             Style="{StaticResource NavButton}"/>
 
+                    <Button Content="⌖  Карта мандрівника"
+                            Click="OnOpenTravelerMap"
+                            Style="{StaticResource NavButton}"/>
+
                     <Button x:Name="PlacesNav"
                             Content="◇  Місця партнера"
                             Tag="Places"
