@@ -25,7 +25,9 @@ public partial class MainWindow
         TrainBookingService trainBooking,
         AccommodationBookingService housingBooking,
         CarBookingService carBooking,
-        ExcursionBookingService excursionBooking)
+        ExcursionBookingService excursionBooking,
+        TravelerMapService travelerMap,
+        BookingReadinessService readiness)
     {
         this.auth = auth;
         this.trips = trips;
@@ -41,6 +43,8 @@ public partial class MainWindow
         this.housingBooking = housingBooking;
         this.carBooking = carBooking;
         this.excursionBooking = excursionBooking;
+        this.travelerMap = travelerMap;
+        this.readiness = readiness;
 
         InitializeComponent();
 
@@ -83,7 +87,8 @@ public partial class MainWindow
             excursionBooking,
             trips,
             session,
-            logger)
+            logger,
+            readiness)
         {
             Owner = this
         };

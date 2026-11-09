@@ -698,6 +698,51 @@ namespace SmartTrip.Infrastructure.Migrations
                     b.ToTable("Trips");
                 });
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.TripPhoto", b =>
+                {
+                    b.Property<int>("TripPhotoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripPhotoId"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Image")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<int?>("PlaceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PlaceName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TripPhotoId");
+
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("TripPhotos");
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -869,6 +914,20 @@ namespace SmartTrip.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SmartTrip.Domain.Entities.TripPhoto", b =>
+                {
+                    b.HasOne("SmartTrip.Domain.Entities.Place", null)
+                        .WithMany()
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartTrip.Domain.Entities.Trip", null)
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SmartTrip.Domain.Entities.User", b =>

@@ -33,10 +33,21 @@ public class ApplicationDbContext : DbContext
     public DbSet<ExcursionReservation> ExcursionReservations =>
         Set<ExcursionReservation>();
 
+    public DbSet<TripPhoto> TripPhotos => Set<TripPhoto>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        var photo = modelBuilder.Entity<TripPhoto>();
+        photo.HasOne<Trip>().WithMany().HasForeignKey(x => x.TripId)
+            .OnDelete(DeleteBehavior.Cascade);
+        photo.HasOne<Place>().WithMany().HasForeignKey(x => x.PlaceId)
+            .OnDelete(DeleteBehavior.SetNull);
+        photo.Property(x => x.Caption).HasMaxLength(120);
+        photo.Property(x => x.PlaceName).HasMaxLength(200);
+        photo.Property(x => x.Address).HasMaxLength(300);
 
         modelBuilder.Entity<User>()
             .HasIndex(x => x.Email)

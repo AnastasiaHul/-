@@ -9,7 +9,7 @@ public sealed class SerilogAppLogger(ILogger logger)
     public void Information(string action, int? userId)
     {
         logger.Information(
-            "Action {Action} succeeded; actor {UserId}",
+            "Action {Action}; actor {UserId}",
             action,
             userId);
     }
