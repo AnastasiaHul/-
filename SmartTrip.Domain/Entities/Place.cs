@@ -17,5 +17,14 @@ namespace SmartTrip.Domain.Entities
         public string? Address { get; set; }
         public string? Schedule { get; set; }
         public string Status { get; set; } = "OnReview";
+        public string? ModerationReason { get; set; }
+        public int EditRevision { get; set; }
+        public string ModerationStatus => Status switch
+        {
+            "Published" or "Active" => "Опубліковано",
+            "OnReview" => "На перевірці",
+            "NeedsChanges" => "Потребує змін",
+            _ => "Приховано"
+        };
     }
 }

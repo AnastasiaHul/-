@@ -9,6 +9,8 @@ public class EfRepository<T>(
     IDbContextFactory<ApplicationDbContext> factory)
     : IRepository<T> where T : class
 {
+    protected IDbContextFactory<ApplicationDbContext> Factory => factory;
+
     public async Task<T?> FindAsync(int id)
     {
         await using ApplicationDbContext context =
@@ -50,7 +52,7 @@ public class EfRepository<T>(
             .ConfigureAwait(false);
     }
 
-    public async Task UpdateAsync(T entity)
+    public virtual async Task UpdateAsync(T entity)
     {
         await using ApplicationDbContext context =
             await factory.CreateDbContextAsync()

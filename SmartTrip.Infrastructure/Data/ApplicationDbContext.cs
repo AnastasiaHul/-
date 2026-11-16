@@ -40,6 +40,18 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<User>().Property(x => x.IsBlocked).HasDefaultValue(false).IsConcurrencyToken();
+        modelBuilder.Entity<Place>().Property(x => x.EditRevision).HasDefaultValue(0).IsConcurrencyToken();
+        modelBuilder.Entity<Place>().Property(x => x.ModerationReason).HasMaxLength(300);
+        modelBuilder.Entity<ExcursionReservation>().Property(x => x.Status).IsConcurrencyToken();
+        modelBuilder.Entity<ExcursionReservation>().Property(x => x.CancellationReason).HasMaxLength(300);
+
+        var audit = modelBuilder.Entity<AdminAuditEntry>();
+        audit.ToTable("AdminAuditEntries");
+        audit.Property(x => x.Action).HasMaxLength(64);
+        audit.Property(x => x.Reason).HasMaxLength(300);
+        audit.HasIndex(x => x.OccurredAtUtc);
+
         var photo = modelBuilder.Entity<TripPhoto>();
         photo.HasOne<Trip>().WithMany().HasForeignKey(x => x.TripId)
             .OnDelete(DeleteBehavior.Cascade);

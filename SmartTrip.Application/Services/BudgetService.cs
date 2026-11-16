@@ -24,7 +24,7 @@ public sealed class BudgetService(IRepository<Expense> expenses, IRepository<Pla
                 return new Failure("Місце не знайдено.");
             }
 
-            if (place.Status == "Hidden")
+            if (place.Status is not ("Published" or "Active"))
             {
                 return new Failure("Це місце зараз недоступне.");
             }

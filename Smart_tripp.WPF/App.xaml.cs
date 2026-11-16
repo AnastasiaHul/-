@@ -98,6 +98,7 @@ public partial class App : System.Windows.Application
             if (databaseProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             {
                 await PhotoDatabaseInitializer.InitializeSqliteAsync(factory);
+                await AdministrationDatabaseInitializer.InitializeSqliteAsync(factory);
             }
 
             MainWindow window =

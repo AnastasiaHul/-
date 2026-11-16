@@ -31,7 +31,7 @@ public class MapAndReadinessTests
             new Trip { TripId = 1, UserId = 7, StartDate = Start, EndDate = Start.AddDays(3) });
         trips = new TripService(tripRecords.Object, session, new ServiceOperations(log.Object, session));
         places.Setup(x => x.FindAsync(2)).ReturnsAsync(
-            new Place { PlaceId = 2, Name = "Музей", Address = "Львів, площа Ринок, 1" });
+            new Place { PlaceId = 2, Name = "Музей", Status = "Published", Address = "Львів, площа Ринок, 1" });
         photos.Setup(x => x.FindAsync(5)).ReturnsAsync(
             new TripPhoto { TripPhotoId = 5, TripId = 1, Address = "Львів, площа Ринок, 1" });
         photos.Setup(x => x.FindAsync(6)).ReturnsAsync(

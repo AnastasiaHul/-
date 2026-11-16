@@ -15,6 +15,7 @@ namespace SmartTrip.Domain.Entities
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? Phone { get; set; }
+        public bool IsBlocked { get; set; }
 
         public ICollection<Trip> Trips { get; set; } = new List<Trip>();
     }

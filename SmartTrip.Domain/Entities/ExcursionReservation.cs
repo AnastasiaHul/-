@@ -19,4 +19,6 @@ public sealed class ExcursionReservation
     public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; } = "Confirmed";
+    public string? CancellationReason { get; set; }
+    public string DisplayStatus => Status == "Cancelled" ? "Скасовано" : "Підтверджено";
 }

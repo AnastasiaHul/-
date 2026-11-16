@@ -107,7 +107,7 @@ public sealed class PlaceService(
                     place = new Place
                     {
                         PartnerId = partnerId,
-                        Status = "Published"
+                        Status = "OnReview"
                     };
                 }
                 else
@@ -130,6 +130,11 @@ public sealed class PlaceService(
                 place.Address = addressText.Trim();
                 place.Schedule = scheduleText.Trim();
                 place.Description = descriptionText.Trim();
+                if (place.Status != "Hidden")
+                {
+                    place.Status = "OnReview";
+                    place.ModerationReason = null;
+                }
 
                 if (id is null)
                 {

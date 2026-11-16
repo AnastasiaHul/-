@@ -132,6 +132,40 @@ namespace SmartTrip.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SmartTrip.Domain.Entities.AdminAuditEntry", b =>
+                {
+                    b.Property<int>("AdminAuditEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AdminAuditEntryId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("ActorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("AdminAuditEntryId");
+
+                    b.HasIndex("OccurredAtUtc");
+
+                    b.ToTable("AdminAuditEntries", (string)null);
+                });
+
             modelBuilder.Entity("SmartTrip.Domain.Entities.CarReservation", b =>
                 {
                     b.Property<int>("CarReservationId")
@@ -207,6 +241,10 @@ namespace SmartTrip.Infrastructure.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -222,6 +260,7 @@ namespace SmartTrip.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -437,6 +476,16 @@ namespace SmartTrip.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<int>("EditRevision")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ModerationReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -758,6 +807,12 @@ namespace SmartTrip.Infrastructure.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsBlocked")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("LastName")
                         .IsRequired()

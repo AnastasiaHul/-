@@ -44,7 +44,7 @@ public sealed class ItineraryService(IRepository<ItineraryVisit> visits, IReposi
                 return new Failure("Місце не знайдено.");
             }
 
-            if (place.Status == "Hidden")
+            if (place.Status is not ("Published" or "Active"))
             {
                 return new Failure("Це місце зараз недоступне.");
             }

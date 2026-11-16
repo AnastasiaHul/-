@@ -121,8 +121,12 @@ public sealed class AuthService(
                         "Неправильний email або пароль.");
                 }
 
-                session.SignIn(user);
+                if (user.IsBlocked)
+                {
+                    return Result<User>.Failure("Акаунт заблоковано. Зверніться до адміністратора.");
+                }
 
+                session.SignIn(user);
                 return Result<User>.Success(user);
             });
     }
@@ -147,7 +151,7 @@ public sealed class AuthService(
             });
     }
 
-    private static Result<string> NormalizeEmail(string? email)
+    internal static Result<string> NormalizeEmail(string? email)
     {
         Result<string> required =
             ServiceOperations.TryRequired(
