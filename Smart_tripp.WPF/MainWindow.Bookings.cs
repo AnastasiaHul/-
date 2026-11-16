@@ -27,7 +27,8 @@ public partial class MainWindow
         CarBookingService carBooking,
         ExcursionBookingService excursionBooking,
         TravelerMapService travelerMap,
-        BookingReadinessService readiness)
+        BookingReadinessService readiness,
+        AdministrationService administration)
     {
         this.auth = auth;
         this.trips = trips;
@@ -45,6 +46,7 @@ public partial class MainWindow
         this.excursionBooking = excursionBooking;
         this.travelerMap = travelerMap;
         this.readiness = readiness;
+        this.administration = administration;
 
         InitializeComponent();
 

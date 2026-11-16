@@ -34,6 +34,7 @@ public partial class MainWindow
 
     private void UpdateAccountNavigation()
     {
+        AdminNav.Visibility = session.CurrentUser?.Role == "Admin" ? Visibility.Visible : Visibility.Collapsed;
         bool tourist = session.CurrentUser?.Role == "Tourist";
         TripsNav.IsEnabled = tourist;
         BudgetNav.IsEnabled = tourist;

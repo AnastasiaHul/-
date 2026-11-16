@@ -49,6 +49,10 @@
                             Click="OnOpenTrainBooking"
                             Style="{StaticResource NavButton}"/>
 
+                    <Button x:Name="AdminNav" Content="Адміністрування"
+                            Click="OnOpenAdministration" Visibility="Collapsed"
+                            Style="{StaticResource NavButton}"/>
+
                     <Button Content="⌖  Карта мандрівника"
                             Click="OnOpenTravelerMap"
                             Style="{StaticResource NavButton}"/>
@@ -286,6 +290,8 @@
                                     <DataGridTextColumn Header="Адреса"
                                                         Binding="{Binding Address}"
                                                         Width="220"/>
+                                    <DataGridTextColumn Header="Модерація" Binding="{Binding ModerationStatus}" Width="150"/>
+                                    <DataGridTextColumn Header="Причина" Binding="{Binding ModerationReason}" Width="200"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 

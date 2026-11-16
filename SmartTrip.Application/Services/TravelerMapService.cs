@@ -165,7 +165,7 @@ public sealed class TravelerMapService(
             return new Failure(access.Error);
         }
 
-        var items = await places.ListAsync(x => x.Status != "Hidden" && x.Address != null)
+        var items = await places.ListAsync(x => (x.Status == "Published" || x.Status == "Active") && x.Address != null)
             .ConfigureAwait(false);
         return items.Where(HasAddress).OrderBy(x => x.Name).ToList();
     }
@@ -174,7 +174,7 @@ public sealed class TravelerMapService(
         "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(query);
 
     private static bool HasAddress(Place? place) =>
-        place is { Status: not "Hidden" } && !string.IsNullOrWhiteSpace(place.Address);
+        place is { Status: "Published" or "Active" } && !string.IsNullOrWhiteSpace(place.Address);
 
     private static bool IsPhoto(byte[] image)
     {

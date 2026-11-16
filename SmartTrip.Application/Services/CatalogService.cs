@@ -26,7 +26,7 @@ public sealed class CatalogService(IRepository<Place> places, IRepository<Favori
 
             string search = text.Trim();
             string filter = category.Trim();
-            IReadOnlyList<Place> candidates = await places.ListAsync(x => x.Status != "Hidden" && (maxPrice == null || x.Price <= maxPrice)).ConfigureAwait(false);
+            IReadOnlyList<Place> candidates = await places.ListAsync(x => (x.Status == "Published" || x.Status == "Active") && (maxPrice == null || x.Price <= maxPrice)).ConfigureAwait(false);
             IReadOnlyList<Place> result = candidates.Where(x => x.Name.Contains(search, StringComparison.OrdinalIgnoreCase) && x.Category.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
             if (!onlyFavorites)
             {
@@ -142,7 +142,7 @@ public sealed class CatalogService(IRepository<Place> places, IRepository<Favori
             return new Failure("Місце не знайдене.");
         }
 
-        if (place.Status == "Hidden")
+        if (place.Status is not ("Published" or "Active"))
         {
             return new Failure("Місце недоступне.");
         }

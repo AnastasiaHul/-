@@ -146,13 +146,13 @@ public partial class MainWindow : Window
             ClearPlaceEditor();
             OnlyFavorites.IsChecked = false;
             User? user = session.CurrentUser;
-            SessionText.Text = user is null ? "Гість — переглядайте каталог або увійдіть" : $"{user.FirstName} · " + (user.Role == "Partner" ? "Партнер" : "Турист");
+            SessionText.Text = user is null ? "Гість — переглядайте каталог або увійдіть" : $"{user.FirstName} · " + (user.Role switch { "Admin" => "Адміністратор", "Partner" => "Партнер", _ => "Турист" });
             LoginPanel.Visibility = user is null ? Visibility.Visible : Visibility.Collapsed;
             LogoutButton.Visibility = user is null ? Visibility.Collapsed : Visibility.Visible;
             TripsTab.IsEnabled = user?.Role == "Tourist";
             BudgetTab.IsEnabled = user?.Role == "Tourist";
             PlacesTab.IsEnabled = user?.Role == "Partner";
-            Tabs.SelectedIndex = user?.Role == "Partner" ? 1 : user is null ? 2 : 0;
+            Tabs.SelectedIndex = user?.Role == "Partner" ? 1 : user?.Role == "Tourist" ? 0 : 2;
             await RefreshAllAsync();
             UpdateAccountNavigation();
             if (!validationFailed)

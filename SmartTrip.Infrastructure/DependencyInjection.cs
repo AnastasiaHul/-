@@ -26,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<ServiceOperations>();
 
         services.AddScoped<AuthService>();
+        services.AddScoped<AdministrationService>();
+        services.AddScoped<IAdministrationRepository, AdministrationRepository>();
         services.AddScoped<TripService>();
         services.AddScoped<TravelerMapService>();
         services.AddScoped<BookingReadinessService>();
