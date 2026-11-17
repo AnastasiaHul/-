@@ -371,13 +371,12 @@ public class TravelerMapListsTests : TravelerMapBalancedTestBase
     }
 
     [Fact]
-    public async Task ListPhotos_EmptyList_ReturnsEmptyResult()
+    public async Task ListPhotos_EmptyList_ReturnEmptyResult()
     {
         SetupOwnedTrip(1);
-        mockPhotos.Setup(x => x.ListAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Place, bool>>>()))
-            .ReturnsAsync(new List<Place>()); // заміна стабу якщо потрібно
+
         mockPhotos.Setup(x => x.ListAsync(It.IsAny<System.Linq.Expressions.Expression<Func<TripPhoto, bool>>>()))
-            .ReturnsAsync(new List<TripPhoto>());
+            .ReturnsAsync(new List<TripPhoto>()); // Виправлено: тепер тут очікується TripPhoto замість Place
 
         var result = await travelerMapService.ListPhotosAsync(1);
 
