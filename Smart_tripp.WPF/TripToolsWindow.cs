@@ -9,16 +9,16 @@ using Microsoft.Win32;
 using SmartTrip.Application.Contracts;
 using SmartTrip.Application.Services;
 using SmartTrip.Domain.Entities;
+using Smart_tripp.WPF.ViewModels;
+using Smart_tripp.WPF.Views;
 
 namespace Smart_tripp.WPF;
 
-public sealed class TripToolsWindow : TravelToolWindow
+public sealed class TripToolsWindow : TravelToolWindow, IToolHost
 {
     private readonly Trip trip;
     private readonly TripTools tools;
-    private readonly BudgetService budget;
     private readonly ItineraryService itinerary;
-    private readonly PackingService packing;
     private readonly UserSession session;
     private readonly IAppLogger logger;
 
@@ -30,32 +30,11 @@ public sealed class TripToolsWindow : TravelToolWindow
         ("Статус", nameof(TripBooking.StatusName), 120),
         ("У витратах", nameof(TripBooking.ExpenseState), 100));
 
-    private readonly DataGrid expensesGrid = CreateGrid(
-        ("Дата", nameof(Expense.Date), 105),
-        ("Категорія", nameof(Expense.Category), 140),
-        ("Опис", nameof(Expense.Description), 0),
-        ("Сума ₴", nameof(Expense.Amount), 100));
-
-    private readonly TextBox expenseCategory = new();
-    private readonly TextBox expenseDescription = new();
-    private readonly TextBox expenseAmount = new();
-    private readonly DatePicker expenseDate = new();
-
-    private readonly DataGrid visitsGrid = CreateGrid(
-        ("Дата і час", nameof(ItineraryVisit.VisitAt), 155),
-        ("Місце", nameof(ItineraryVisit.PlaceName), 0),
-        ("Примітка", nameof(ItineraryVisit.Notes), 0));
-
-    private readonly DatePicker visitDate = new();
-    private readonly TextBox visitTime = new() { Text = "10:00" };
-    private readonly TextBox visitNotes = new();
-
-    private readonly TextBox copyTitle = new();
-    private readonly DatePicker copyStart = new();
-
-    private readonly ComboBox templateBox = new() { DisplayMemberPath = nameof(PackingTemplate.Name) };
-    private readonly TextBlock templatePreview = new() { Margin = new Thickness(3, 8, 3, 8) };
-    private readonly TextBlock packingList = new() { Margin = new Thickness(3, 8, 3, 8) };
+    // реалізовані за MVVM: дані та команди містяться у ViewModel.
+    private readonly ExpenseEditViewModel expenseEdit;
+    private readonly RescheduleVisitViewModel reschedule;
+    private readonly TripCopyViewModel tripCopy;
+    private readonly PackingTemplateViewModel packingTemplates;
 
     private readonly DataGrid recommendationsGrid = CreateGrid(
         ("Місце", nameof(PlaceRecommendation.Name), 0),
@@ -74,36 +53,44 @@ public sealed class TripToolsWindow : TravelToolWindow
     {
         this.trip = trip;
         this.tools = tools;
-        this.budget = budget;
         this.itinerary = itinerary;
-        this.packing = packing;
         this.session = session;
         this.logger = logger;
         MinWidth = 860;
 
-        foreach (DatePicker picker in new[] { expenseDate, visitDate, recommendationDate })
-        {
-            picker.DisplayDateStart = trip.StartDate.Date;
-            picker.DisplayDateEnd = trip.EndDate.Date;
-            picker.SelectedDate = trip.StartDate.Date;
-        }
+        recommendationDate.DisplayDateStart = trip.StartDate.Date;
+        recommendationDate.DisplayDateEnd = trip.EndDate.Date;
+        recommendationDate.SelectedDate = trip.StartDate.Date;
 
-        copyTitle.Text = trip.Title.Length > 140 ? trip.Title : trip.Title + " (копія)";
-        copyStart.DisplayDateStart = DateTime.Today;
-        copyStart.SelectedDate = DateTime.Today.AddDays(7);
+        expenseEdit = new ExpenseEditViewModel(trip, budget, tools.Expenses, this);
+        reschedule = new RescheduleVisitViewModel(trip, itinerary, tools.Visits, this);
+        tripCopy = new TripCopyViewModel(trip, tools.Copies, this);
+        packingTemplates = new PackingTemplateViewModel(trip, packing, tools.Templates, this);
 
         var tabs = new TabControl();
         tabs.Items.Add(BookingsTab());
-        tabs.Items.Add(ExpensesTab());
-        tabs.Items.Add(VisitsTab());
-        tabs.Items.Add(CopyTab());
-        tabs.Items.Add(TemplatesTab());
+        tabs.Items.Add(CreateTab("Витрати", new ExpenseEditView { DataContext = expenseEdit }));
+        tabs.Items.Add(CreateTab("Перенесення", new RescheduleVisitView { DataContext = reschedule }));
+        tabs.Items.Add(CreateTab("Копія", new TripCopyView { DataContext = tripCopy }));
+        tabs.Items.Add(CreateTab("Шаблони речей", new PackingTemplateView { DataContext = packingTemplates }));
         tabs.Items.Add(RecommendationsTab());
         tabs.Items.Add(ReportTab());
         Form.Children.Add(tabs);
 
         Loaded += async (_, _) => await RunAsync("TripTools.Open", RefreshAsync);
     }
+
+    Task IToolHost.RunAsync(string action, Func<Task> work)
+    {
+        ShowStatus(string.Empty);
+        return RunAsync(action, work);
+    }
+
+    void IToolHost.Reject(string action, string message) => Reject(action, message);
+
+    bool IToolHost.Confirm(string message) => Ask(message);
+
+    Task IToolHost.RefreshAsync() => RefreshAsync();
 
     // 1. Скасування бронювання та 2. перенесення бронювань у витрати.
     private TabItem BookingsTab()
@@ -154,192 +141,7 @@ public sealed class TripToolsWindow : TravelToolWindow
         ShowStatus("Бронювання скасовано.");
     }
 
-    // 3. Редагування та видалення витрати.
-    private TabItem ExpensesTab()
-    {
-        var panel = CreatePage("Виберіть витрату, щоб змінити або видалити її.");
-        panel.Children.Add(expensesGrid);
-        expensesGrid.SelectionChanged += (_, _) =>
-        {
-            if (expensesGrid.SelectedItem is not Expense expense)
-            {
-                return;
-            }
-
-            expenseCategory.Text = expense.Category;
-            expenseDescription.Text = expense.Description;
-            expenseAmount.Text = expense.Amount.ToString("0.##", CultureInfo.CurrentCulture);
-            expenseDate.SelectedDate = expense.Date.Date;
-        };
-        AddField(panel, "Категорія", expenseCategory);
-        AddField(panel, "Опис", expenseDescription);
-        AddField(panel, "Сума ₴", expenseAmount);
-        AddField(panel, "Дата", expenseDate);
-
-        var buttons = new WrapPanel();
-        buttons.Children.Add(ActionButton("Зберегти зміни", "Expense.Edit", async () =>
-        {
-            if (expensesGrid.SelectedItem is not Expense expense)
-            {
-                ShowStatus("Спочатку виберіть витрату.");
-                return;
-            }
-
-            var amount = UiInput.Money(expenseAmount);
-            var date = UiInput.Date(expenseDate);
-            if (amount.IsFailure || date.IsFailure)
-            {
-                Reject("Expense.Edit", amount.IsFailure ? amount.Error : date.Error);
-                return;
-            }
-
-            var result = await tools.Expenses.UpdateAsync(expense.ExpenseId, expenseCategory.Text,
-                expenseDescription.Text, amount.Value, date.Value);
-            if (result.IsFailure)
-            {
-                ShowStatus(result.Error);
-                return;
-            }
-
-            await RefreshAsync();
-            ShowStatus("Витрату оновлено.");
-        }));
-        buttons.Children.Add(ActionButton("Видалити витрату", "Expense.Delete", async () =>
-        {
-            if (expensesGrid.SelectedItem is not Expense expense)
-            {
-                ShowStatus("Спочатку виберіть витрату.");
-                return;
-            }
-
-            if (!Ask($"Видалити витрату «{expense.Description}»?"))
-            {
-                return;
-            }
-
-            var result = await tools.Expenses.DeleteAsync(expense.ExpenseId);
-            if (result.IsFailure)
-            {
-                ShowStatus(result.Error);
-                return;
-            }
-
-            expenseCategory.Clear();
-            expenseDescription.Clear();
-            expenseAmount.Clear();
-            await RefreshAsync();
-            ShowStatus("Витрату видалено.");
-        }));
-        panel.Children.Add(buttons);
-        return CreateTab("Витрати", panel);
-    }
-
-    // 4. Перенесення запланованого відвідування.
-    private TabItem VisitsTab()
-    {
-        var panel = CreatePage("Виберіть відвідування та вкажіть новий час або примітку.");
-        panel.Children.Add(visitsGrid);
-        visitsGrid.SelectionChanged += (_, _) =>
-        {
-            if (visitsGrid.SelectedItem is not ItineraryVisit visit)
-            {
-                return;
-            }
-
-            visitDate.SelectedDate = visit.VisitAt.Date;
-            visitTime.Text = visit.VisitAt.ToString("HH:mm", CultureInfo.InvariantCulture);
-            visitNotes.Text = visit.Notes;
-        };
-        AddField(panel, "Нова дата", visitDate);
-        AddField(panel, "Новий час (ГГ:ХХ)", visitTime);
-        AddField(panel, "Примітка", visitNotes);
-        panel.Children.Add(ActionButton("Перенести відвідування", "Itinerary.Reschedule", async () =>
-        {
-            if (visitsGrid.SelectedItem is not ItineraryVisit visit)
-            {
-                ShowStatus("Спочатку виберіть відвідування.");
-                return;
-            }
-
-            if (ReadDateTime("Itinerary.Reschedule", visitDate, visitTime) is not DateTime time)
-            {
-                return;
-            }
-
-            var result = await tools.Visits.RescheduleAsync(visit.ItineraryVisitId, time, visitNotes.Text);
-            if (result.IsFailure)
-            {
-                ShowStatus(result.Error);
-                return;
-            }
-
-            await RefreshAsync();
-            ShowStatus("Відвідування перенесено.");
-        }));
-        return CreateTab("Перенесення", panel);
-    }
-
-    // 5. Копіювання подорожі.
-    private TabItem CopyTab()
-    {
-        var panel = CreatePage("Створює нову подорож із тими самими параметрами, планом і списком речей. "
-            + "Дати плану зсуваються. Витрати та бронювання не копіюються.");
-        AddField(panel, "Назва нової подорожі", copyTitle);
-        AddField(panel, "Нова дата початку", copyStart);
-        panel.Children.Add(ActionButton("Створити копію", "Trip.Copy", async () =>
-        {
-            var date = UiInput.Date(copyStart);
-            if (date.IsFailure)
-            {
-                Reject("Trip.Copy", date.Error);
-                return;
-            }
-
-            var result = await tools.Copies.CopyAsync(trip.TripId, copyTitle.Text, date.Value);
-            if (result.IsFailure)
-            {
-                ShowStatus(result.Error);
-                return;
-            }
-
-            TripCopyResult copy = result.Value!;
-            ShowStatus($"Створено «{copy.Trip.Title}»: відвідувань — {copy.Visits}, речей — {copy.PackingItems}"
-                + (copy.SkippedVisits > 0 ? $", пропущено недоступних місць — {copy.SkippedVisits}" : string.Empty)
-                + ". Вона з’явиться у «Моїх подорожах».");
-        }));
-        return CreateTab("Копія", panel);
-    }
-
-    // 6. Шаблони списку речей.
-    private TabItem TemplatesTab()
-    {
-        var panel = CreatePage("Додайте готовий набір речей. Дублікати пропускаються.");
-        templateBox.SelectionChanged += (_, _) => templatePreview.Text =
-            templateBox.SelectedItem is PackingTemplate template
-                ? "У шаблоні: " + string.Join(", ", template.Items)
-                : string.Empty;
-        templateBox.ItemsSource = PackingTemplateService.Templates;
-        templateBox.SelectedIndex = 0;
-        AddField(panel, "Шаблон", templateBox);
-        panel.Children.Add(templatePreview);
-        panel.Children.Add(ActionButton("Додати речі з шаблону", "Packing.ApplyTemplate", async () =>
-        {
-            string name = (templateBox.SelectedItem as PackingTemplate)?.Name ?? string.Empty;
-            var result = await tools.Templates.ApplyAsync(trip.TripId, name);
-            if (result.IsFailure)
-            {
-                ShowStatus(result.Error);
-                return;
-            }
-
-            await RefreshAsync();
-            ShowStatus($"Додано речей: {result.Value}.");
-        }));
-        panel.Children.Add(packingList);
-        return CreateTab("Шаблони речей", panel);
-    }
-
-    // 7. Рекомендації місць.
+    // Рекомендації місць
     private TabItem RecommendationsTab()
     {
         var panel = CreatePage($"Місця з міста «{trip.City}» (за адресою), які ще не в плані та не дорожчі "
@@ -373,7 +175,7 @@ public sealed class TripToolsWindow : TravelToolWindow
         return CreateTab("Рекомендації", panel);
     }
 
-    // 8. Експорт звіту.
+    //  Експорт звіту
     private TabItem ReportTab()
     {
         var panel = CreatePage("Звіт містить бюджет, план, бронювання, витрати та речі. "
@@ -428,24 +230,18 @@ public sealed class TripToolsWindow : TravelToolWindow
     private async Task RefreshAsync()
     {
         var bookings = await tools.Bookings.ListAsync(trip.TripId);
-        var expenses = await budget.ListAsync(trip.TripId);
-        var visits = await itinerary.ListAsync(trip.TripId);
-        var items = await packing.ListAsync(trip.TripId);
         var recommendations = await tools.Recommendations.GetAsync(trip.TripId);
-        if (bookings.IsFailure || expenses.IsFailure || visits.IsFailure
-            || items.IsFailure || recommendations.IsFailure)
+        bool loaded = await expenseEdit.LoadAsync();
+        loaded &= await reschedule.LoadAsync();
+        loaded &= await packingTemplates.LoadAsync();
+        if (bookings.IsFailure || recommendations.IsFailure || !loaded)
         {
             ShowStatus("Не вдалося завантажити дані. Увійдіть як власник подорожі.");
             return;
         }
 
         bookingsGrid.ItemsSource = bookings.Value;
-        expensesGrid.ItemsSource = expenses.Value!.OrderByDescending(x => x.Date).ToList();
-        visitsGrid.ItemsSource = visits.Value;
         recommendationsGrid.ItemsSource = recommendations.Value;
-        packingList.Text = items.Value!.Count == 0
-            ? "Список речей поки порожній."
-            : "Уже у списку: " + string.Join(", ", items.Value.Select(x => x.Name));
     }
 
     private DateTime? ReadDateTime(string action, DatePicker picker, TextBox timeBox)
@@ -487,22 +283,18 @@ public sealed class TripToolsWindow : TravelToolWindow
     private static TabItem CreateTab(string title, UIElement content) =>
         new() { Header = title, Content = content, Padding = new Thickness(12, 7, 12, 7) };
 
-    // Ширина 0 означає, що колонка займає вільне місце.
+    //  0 означає що колонка займає вільне місце.
     private static DataGrid CreateGrid(params (string Header, string Path, double Width)[] columns)
     {
         var grid = new DataGrid { Height = 230 };
         foreach ((string header, string path, double width) in columns)
         {
             var binding = new Binding(path);
-            if (path is nameof(Expense.Date) or nameof(TripBooking.StartsAt))
+            if (path == nameof(TripBooking.StartsAt))
             {
                 binding.StringFormat = "dd.MM.yyyy";
             }
-            else if (path == nameof(ItineraryVisit.VisitAt))
-            {
-                binding.StringFormat = "dd.MM.yyyy HH:mm";
-            }
-            else if (path is nameof(Expense.Amount) or nameof(TripBooking.Price))
+            else if (path == nameof(TripBooking.Price))
             {
                 binding.StringFormat = "N2";
             }
