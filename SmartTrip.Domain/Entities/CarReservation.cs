@@ -23,4 +23,6 @@ public sealed class CarReservation
     public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; } = "Confirmed";
+
+    public string DisplayStatus => Status == "Cancelled" ? "Скасовано" : "Підтверджено";
 }

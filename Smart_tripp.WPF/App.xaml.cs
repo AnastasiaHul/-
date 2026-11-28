@@ -85,6 +85,7 @@ public partial class App : System.Windows.Application
                 }
             }, Log.Logger);
 
+            services.AddScoped<TripTools>();
             services.AddScoped<MainWindow>();
 
             provider = services.BuildServiceProvider(

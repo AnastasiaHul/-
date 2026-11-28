@@ -97,11 +97,16 @@
                 </TextBlock>
             </StackPanel>
 
-            <Button x:Name="BackButton"
-                    Grid.Column="1"
-                    Content="← До моїх подорожей"
-                    VerticalAlignment="Top"
-                    Style="{StaticResource SecondaryButton}"/>
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Top">
+                <Button x:Name="ToolsButton"
+                        Content="✦ Інструменти подорожі"/>
+
+                <Button x:Name="BackButton"
+                        Content="← До моїх подорожей"
+                        Style="{StaticResource SecondaryButton}"/>
+            </StackPanel>
         </Grid>
 
         <!-- Коротка інформація про бюджет -->

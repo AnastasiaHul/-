@@ -42,6 +42,15 @@ public static class DependencyInjection
         services.AddScoped<AccommodationBookingService>();
         services.AddScoped<CarBookingService>();
         services.AddScoped<ExcursionBookingService>();
+        services.AddScoped<BookingManagementService>();
+        services.AddScoped<ExpenseEditingService>();
+        services.AddScoped<VisitRescheduleService>();
+        services.AddScoped<TripCopyService>();
+        services.AddScoped<PackingTemplateService>();
+        services.AddScoped<RecommendationService>();
+        services.AddScoped<TripReportService>();
+        services.AddScoped<IBookingCancellationRepository, BookingCancellationRepository>();
+        services.AddScoped<ITripCopyRepository, TripCopyRepository>();
 
         services.AddScoped<
             IRepository<ItineraryVisit>,

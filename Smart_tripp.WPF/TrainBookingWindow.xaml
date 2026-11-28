@@ -318,6 +318,7 @@
                                 <DataGridTextColumn Header="Вартість, ₴"
                                                     Binding="{Binding TotalPrice, StringFormat=N2}"
                                                     Width="110"/>
+                                <DataGridTextColumn Header="Статус" Binding="{Binding DisplayStatus}" Width="120"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>

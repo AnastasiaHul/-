@@ -17,6 +17,7 @@ public partial class TripWorkspaceWindow : Window
     private readonly BudgetService budget;
     private readonly PackingService packing;
     private readonly MapRouteService mapRoutes;
+    private readonly TripTools tools;
     private readonly UserSession session;
     private readonly IAppLogger logger;
     private bool busy;
@@ -25,7 +26,7 @@ public partial class TripWorkspaceWindow : Window
     public string? RequestedAction { get; private set; }
     public int SelectedTabIndex => WorkspaceTabs.SelectedIndex;
 
-    public TripWorkspaceWindow(Trip trip, TripService trips, ItineraryService itinerary, BudgetService budget, PackingService packing, MapRouteService mapRoutes, UserSession session, IAppLogger logger, int selectedTab = 0)
+    public TripWorkspaceWindow(Trip trip, TripService trips, ItineraryService itinerary, BudgetService budget, PackingService packing, MapRouteService mapRoutes, TripTools tools, UserSession session, IAppLogger logger, int selectedTab = 0)
     {
         this.trip = trip;
         this.trips = trips;
@@ -33,6 +34,7 @@ public partial class TripWorkspaceWindow : Window
         this.budget = budget;
         this.packing = packing;
         this.mapRoutes = mapRoutes;
+        this.tools = tools;
         this.session = session;
         this.logger = logger;
         InitializeComponent();
@@ -49,6 +51,7 @@ public partial class TripWorkspaceWindow : Window
         TogglePackingButton.Click += OnTogglePacking;
         DeletePackingButton.Click += OnDeletePacking;
         OpenRouteButton.Click += OnOpenRoute;
+        ToolsButton.Click += OnOpenTools;
         Closing += (_, args) => args.Cancel = busy && !allowClose;
         Loaded += async (_, _) => await ExecuteAsync(RefreshAsync);
     }
@@ -314,6 +317,17 @@ public partial class TripWorkspaceWindow : Window
 
             await RefreshAsync();
         });
+    }
+
+    private async void OnOpenTools(object sender, RoutedEventArgs e)
+    {
+        if (busy)
+        {
+            return;
+        }
+
+        new TripToolsWindow(trip, tools, budget, itinerary, packing, session, logger) { Owner = this }.ShowDialog();
+        await ExecuteAsync(RefreshAsync);
     }
 
     private async void OnOpenRoute(object sender, RoutedEventArgs e)

@@ -28,8 +28,10 @@ public partial class MainWindow
         ExcursionBookingService excursionBooking,
         TravelerMapService travelerMap,
         BookingReadinessService readiness,
-        AdministrationService administration)
+        AdministrationService administration,
+        TripTools tripTools)
     {
+        this.tripTools = tripTools;
         this.auth = auth;
         this.trips = trips;
         this.places = places;

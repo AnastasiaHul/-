@@ -6,6 +6,8 @@ using SmartTrip.Domain.Entities;
 namespace Smart_tripp.WPF;
 public partial class MainWindow
 {
+    private readonly TripTools tripTools;
+
     private async void OnOpenTripWorkspace(object sender, RoutedEventArgs e)
     {
         if (busy || activeDialog is not null)
@@ -61,7 +63,7 @@ public partial class MainWindow
                 return;
             }
 
-            var workspace = new TripWorkspaceWindow(selectedTrip, trips, itinerary, budget, packing, mapRoutes, session, logger, selectedTab)
+            var workspace = new TripWorkspaceWindow(selectedTrip, trips, itinerary, budget, packing, mapRoutes, tripTools, session, logger, selectedTab)
             {
                 Owner = this
             };
